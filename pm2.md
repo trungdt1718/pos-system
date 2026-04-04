@@ -14,6 +14,10 @@ Mở terminal (hoặc SSH vào server) và chạy lệnh sau để cài đặt P
 ```bash
 npm install pm2 -g
 ```
+Cài đặt công cụ hỗ trợ khởi động trên Windows
+```bash
+npm install -g pm2-windows-startup
+```
 
 Kiểm tra cài đặt thành công:
 ```bash
@@ -47,6 +51,9 @@ module.exports = {
 
 ### Khởi chạy ứng dụng
 ```bash
+npm run build
+```
+```bash
 pm2 start ecosystem.config.cjs
 ```
 
@@ -75,13 +82,9 @@ pm2 delete sumi-mart-pos   # Xóa khỏi danh sách quản lý của PM2
 
 1. Chạy lệnh tạo script startup:
    ```bash
-   npm install -g pm2-windows-startup
-   ```
-   ```bash
    pm2-startup install
    ```
-2. Terminal sẽ hiển thị một dòng lệnh (bắt đầu bằng `sudo env PATH...`). Hãy **Copy** dòng đó, **Paste** lại vào terminal và nhấn **Enter**.
-3. Lưu trạng thái hiện tại để PM2 nhớ ứng dụng cần chạy:
+2. Lưu trạng thái hiện tại để PM2 nhớ ứng dụng cần chạy:
    ```bash
    pm2 save
    ```
