@@ -75,7 +75,10 @@ pm2 delete sumi-mart-pos   # Xóa khỏi danh sách quản lý của PM2
 
 1. Chạy lệnh tạo script startup:
    ```bash
-   pm2 startup
+   npm install -g pm2-windows-startup
+   ```
+   ```bash
+  pm2-startup install
    ```
 2. Terminal sẽ hiển thị một dòng lệnh (bắt đầu bằng `sudo env PATH...`). Hãy **Copy** dòng đó, **Paste** lại vào terminal và nhấn **Enter**.
 3. Lưu trạng thái hiện tại để PM2 nhớ ứng dụng cần chạy:
