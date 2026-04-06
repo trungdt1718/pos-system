@@ -2,13 +2,21 @@ import React, { useEffect, useState } from "react";
 import { productService } from "../services/api";
 import { Product } from "../types";
 import { formatCurrency, cn } from "../lib/utils";
-import { Filter, Download, Edit, Trash2, PlusCircle, Edit3 } from "lucide-react";
-import { motion } from "motion/react";
+import { Filter, Download, Edit, Trash2, PlusCircle, Edit3, CheckCircle2, AlertCircle } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notification, setNotification] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+
+  const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
   const [formData, setFormData] = useState<Partial<Product>>({
     name: "",
     category: "Thực phẩm",
@@ -33,22 +41,32 @@ export default function Products() {
     });
   };
 
-  const handleUpdate = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (selectedProduct) {
+  const handleUpdate = () => {
+    if (selectedProduct && !isSubmitting) {
+      setIsSubmitting(true);
       productService.update(selectedProduct.id, selectedProduct).then(() => {
         loadProducts();
-        alert("Cập nhật sản phẩm thành công!");
-      });
+        showNotification("Cập nhật sản phẩm thành công!");
+      }).catch(err => {
+        console.error(err);
+        showNotification("Lỗi khi cập nhật sản phẩm", "error");
+      }).finally(() => setIsSubmitting(false));
     }
   };
 
   const handleDelete = () => {
-    if (selectedProduct && window.confirm(`Bạn có chắc chắn muốn xóa sản phẩm ${selectedProduct.name}?`)) {
-      productService.delete(selectedProduct.id).then(() => {
-        setSelectedProduct(null);
-        loadProducts();
-      });
+    if (selectedProduct && !isSubmitting) {
+      if (confirm(`Bạn có chắc chắn muốn xóa sản phẩm ${selectedProduct.name}?`)) {
+        setIsSubmitting(true);
+        productService.delete(selectedProduct.id).then(() => {
+          setSelectedProduct(null);
+          loadProducts();
+          showNotification("Đã xóa sản phẩm!");
+        }).catch(err => {
+          console.error(err);
+          showNotification("Lỗi khi xóa sản phẩm", "error");
+        }).finally(() => setIsSubmitting(false));
+      }
     }
   };
 
@@ -68,13 +86,19 @@ export default function Products() {
   };
 
   const handleSaveNew = () => {
-    if (!formData.name) return alert("Vui lòng nhập tên sản phẩm!");
+    if (!formData.name) return showNotification("Vui lòng nhập tên sản phẩm!", "error");
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
     productService.create(formData).then((res) => {
       setIsAdding(false);
       loadProducts();
       setSelectedProduct(res.data);
-      alert("Thêm sản phẩm mới thành công!");
-    });
+      showNotification("Thêm sản phẩm mới thành công!");
+    }).catch(err => {
+      console.error(err);
+      showNotification("Lỗi khi thêm sản phẩm", "error");
+    }).finally(() => setIsSubmitting(false));
   };
 
   return (
@@ -260,6 +284,24 @@ export default function Products() {
                 />
               </div>
               <div className="col-span-6">
+                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Giá bán</label>
+                <input 
+                  type="number"
+                  className="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-lg px-3 py-2 text-sm focus:border-primary-container" 
+                  value={selectedProduct.price}
+                  onChange={(e) => setSelectedProduct({...selectedProduct, price: Number(e.target.value)})}
+                />
+              </div>
+              <div className="col-span-6">
+                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Tồn kho</label>
+                <input 
+                  type="number"
+                  className="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-lg px-3 py-2 text-sm focus:border-primary-container" 
+                  value={selectedProduct.stock}
+                  onChange={(e) => setSelectedProduct({...selectedProduct, stock: Number(e.target.value)})}
+                />
+              </div>
+              <div className="col-span-6">
                 <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Nhà sản xuất</label>
                 <input 
                   className="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-lg px-3 py-2 text-sm focus:border-primary-container" 
@@ -307,16 +349,21 @@ export default function Products() {
               </button>
               <button 
                 onClick={handleSaveNew}
-                className="px-6 py-2.5 rounded-lg text-sm font-bold text-white bg-gradient-to-br from-primary to-primary-container shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2"
+                disabled={isSubmitting}
+                className={cn(
+                  "px-6 py-2.5 rounded-lg text-sm font-bold text-white bg-gradient-to-br from-primary to-primary-container shadow-md transition-all flex items-center gap-2",
+                  isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:scale-[1.02] active:scale-[0.98]"
+                )}
               >
-                <PlusCircle className="w-4 h-4" /> Lưu hàng hóa
+                <PlusCircle className={cn("w-4 h-4", isSubmitting && "animate-spin")} /> {isSubmitting ? "Đang lưu..." : "Lưu hàng hóa"}
               </button>
             </>
           ) : selectedProduct ? (
             <>
               <button 
                 onClick={handleDelete}
-                className="px-5 py-2.5 rounded-lg text-sm font-bold text-error border border-error/20 hover:bg-error-container hover:border-transparent transition-all flex items-center gap-2"
+                disabled={isSubmitting}
+                className="px-5 py-2.5 rounded-lg text-sm font-bold text-error border border-error/20 hover:bg-error-container hover:border-transparent transition-all flex items-center gap-2 disabled:opacity-50"
               >
                 <Trash2 className="w-4 h-4" /> Xóa
               </button>
@@ -326,9 +373,10 @@ export default function Products() {
               </button>
               <button 
                 onClick={handleUpdate}
-                className="px-5 py-2.5 rounded-lg text-sm font-bold text-on-secondary-container bg-secondary-container hover:brightness-95 transition-all flex items-center gap-2"
+                disabled={isSubmitting}
+                className="px-5 py-2.5 rounded-lg text-sm font-bold text-on-secondary-container bg-secondary-container hover:brightness-95 transition-all flex items-center gap-2 disabled:opacity-50"
               >
-                <Edit className="w-4 h-4" /> Chỉnh
+                <Edit className="w-4 h-4" /> {isSubmitting ? "Đang lưu..." : "Chỉnh sửa"}
               </button>
               <button 
                 onClick={startAdding}
@@ -347,6 +395,26 @@ export default function Products() {
           )}
         </div>
       </section>
+
+      {/* Notification */}
+      <AnimatePresence>
+        {notification && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: 20, x: "-50%" }}
+            className={cn(
+              "fixed bottom-8 left-1/2 z-[100] flex items-center gap-3 px-6 py-3 rounded-2xl shadow-2xl border backdrop-blur-md",
+              notification.type === 'success' 
+                ? "bg-green-500/90 border-green-400 text-white" 
+                : "bg-red-500/90 border-red-400 text-white"
+            )}
+          >
+            {notification.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+            <span className="font-bold tracking-tight">{notification.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

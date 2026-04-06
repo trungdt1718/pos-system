@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Search, Bell, UserCircle, Store, PersonStanding, CreditCard, History, Tag, ShoppingCart, Printer, Plus, Minus, Trash2, Save, X } from "lucide-react";
+import { Search, Bell, UserCircle, Store, PersonStanding, CreditCard, History, Tag, ShoppingCart, Printer, Plus, Minus, Trash2, Save, X, CheckCircle2, AlertCircle } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { formatCurrency, cn } from "../lib/utils";
-import { productService, customerService, invoiceService } from "../services/api";
+import { productService, customerService, staffService, invoiceService, systemService } from "../services/api";
 import { Product, Customer } from "../types";
 
 export default function POS() {
@@ -14,18 +15,56 @@ export default function POS() {
   const [activeTab, setActiveTab] = useState("customer");
   const [invoiceId] = useState(`HD-${Math.floor(1000 + Math.random() * 9000)}`);
   const [recentInvoices, setRecentInvoices] = useState<any[]>([]);
+  const [settings, setSettings] = useState<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notification, setNotification] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+
+  const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
 
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   const customerSelectRef = React.useRef<HTMLSelectElement>(null);
+
+  const seedData = async () => {
+    try {
+      const products = [
+        { id: "HH-001", name: "Bánh mì bò kho", category: "Thức ăn", unit: "Tô", price: 35000, stock: 100, batch: "L01", expiry: "2026-12-31" },
+        { id: "HH-002", name: "Hủ tiếu bò kho", category: "Thức ăn", unit: "Tô", price: 35000, stock: 80, batch: "L01", expiry: "2026-12-31" },
+        { id: "HH-003", name: "Sữa đậu nành", category: "Đồ uống", unit: "Ly", price: 10000, stock: 50, batch: "L02", expiry: "2026-05-20" },
+      ];
+      const customers = [
+        { id: "000001", name: "Bán Lẻ", gender: "1", address: "TP. Cần Thơ", phone: "0795986289", email: "khachle@gmail.com", totalSpent: 1250000 },
+        { id: "KH-00235", name: "Đặng Thành Trung", gender: "1", address: "Ninh Kiều, Cần Thơ", phone: "0901234567", email: "trungdt@gmail.com", totalSpent: 5000000 },
+      ];
+      const staff = [
+        { id: "NV001", name: "Quản trị viên", username: "admin", role: "admin", status: "Đang làm việc" },
+      ];
+
+      for (const p of products) await productService.create(p);
+      for (const c of customers) await customerService.create(c);
+      for (const s of staff) await staffService.create(s);
+      
+      showNotification("Đã khởi tạo dữ liệu mẫu thành công!");
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (error) {
+      console.error("Seed error:", error);
+      showNotification("Lỗi khi khởi tạo dữ liệu", "error");
+    }
+  };
 
   useEffect(() => {
     productService.getAll().then(res => setProducts(res.data));
     customerService.getAll().then(res => {
       setCustomers(res.data);
-      if (res.data.length > 0) setSelectedCustomer(res.data[0]);
+      if (res.data.length > 0 && !selectedCustomer) setSelectedCustomer(res.data[0]);
     });
     invoiceService.getAll().then(res => setRecentInvoices(res.data.slice(0, 5)));
+    systemService.getSettings().then(res => setSettings(res.data));
+  }, []);
 
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
         case "F1":
@@ -41,7 +80,7 @@ export default function POS() {
           break;
         case "F3":
           e.preventDefault();
-          alert("Chức năng Nhập hàng đang được phát triển");
+          showNotification("Chức năng Nhập hàng đang được phát triển", "error");
           break;
         case "F4":
           e.preventDefault();
@@ -53,9 +92,10 @@ export default function POS() {
           break;
         case "F6":
           e.preventDefault();
-          if (window.confirm("Bạn có chắc chắn muốn hủy bỏ đơn hàng này?")) {
+          if (confirm("Bạn có chắc chắn muốn hủy bỏ đơn hàng này?")) {
             setCart([]);
             setPaid(0);
+            showNotification("Đã hủy đơn hàng");
           }
           break;
       }
@@ -97,29 +137,36 @@ export default function POS() {
   const change = paid > 0 ? paid - total : 0;
 
   const handleCheckout = () => {
-    if (cart.length === 0) return alert("Giỏ hàng trống!");
+    if (cart.length === 0) return showNotification("Giỏ hàng trống!", "error");
+    if (isSubmitting) return;
     
     if (paid < total) {
       setActiveTab("payment");
-      alert("Tiền khách trả chưa đủ! Vui lòng nhập số tiền khách đưa ở tab Tổng thanh toán.");
+      showNotification("Tiền khách trả chưa đủ!", "error");
       return;
     }
 
     const invoiceData = {
-      customerName: selectedCustomer?.name || "Khách lẻ",
-      products: cart.map(item => `${item.name} x${item.quantity}`).join(", "),
-      time: new Date().toLocaleTimeString(),
-      total: total,
-      status: "Hoàn tất"
+      customerId: selectedCustomer?.id || "KL",
+      items: cart.map(item => ({
+        id: item.id,
+        quantity: item.quantity,
+        price: item.price
+      })),
+      total: total
     };
 
+    setIsSubmitting(true);
     invoiceService.create(invoiceData as any).then(() => {
-      alert("Thanh toán thành công! Đã in hóa đơn.");
+      showNotification("Thanh toán thành công! Đã in hóa đơn.");
       setCart([]);
       setPaid(0);
       setActiveTab("customer");
       invoiceService.getAll().then(res => setRecentInvoices(res.data.slice(0, 5)));
-    });
+    }).catch(err => {
+      console.error(err);
+      showNotification("Lỗi khi thanh toán", "error");
+    }).finally(() => setIsSubmitting(false));
   };
 
   // Automatically set paid amount to total if it's currently 0 and items are in cart
@@ -127,8 +174,8 @@ export default function POS() {
   const setExactChange = () => setPaid(total);
 
   const handlePrint = () => {
-    if (cart.length === 0) return alert("Không có gì để in!");
-    alert(`Đang in hóa đơn ${invoiceId}...\nTổng tiền: ${formatCurrency(total)}`);
+    if (cart.length === 0) return showNotification("Không có gì để in!", "error");
+    showNotification(`Đang in hóa đơn ${invoiceId}...`);
   };
 
   return (
@@ -141,7 +188,7 @@ export default function POS() {
               <Store className="text-white w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-primary-container leading-tight">Sumi.Mart POS</h1>
+              <h1 className="text-xl font-bold text-primary-container leading-tight">{settings?.tendv || "Sumi.Mart POS"}</h1>
               <p className="text-xs text-on-surface-variant uppercase tracking-wider font-semibold">Nhân viên: Quản trị viên</p>
             </div>
           </div>
@@ -312,6 +359,12 @@ export default function POS() {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <button 
+              onClick={seedData}
+              className="text-[10px] font-bold text-on-surface-variant/40 hover:text-primary transition-colors uppercase tracking-widest"
+            >
+              Khởi tạo dữ liệu mẫu
+            </button>
             <Bell className="text-on-surface-variant w-5 h-5 cursor-pointer" />
             <UserCircle className="text-on-surface-variant w-5 h-5 cursor-pointer" />
           </div>
@@ -387,12 +440,32 @@ export default function POS() {
         <footer className="h-12 bg-primary-container flex justify-around items-center px-4 shadow-2xl">
           <POSFooterBtn label="[F1] Thêm HĐ" onClick={() => { setCart([]); setPaid(0); searchInputRef.current?.focus(); }} />
           <POSFooterBtn label="[F2] Khách hàng" onClick={() => setActiveTab("customer")} />
-          <POSFooterBtn label="[F3] Nhập hàng" onClick={() => alert("Chức năng Nhập hàng đang được phát triển")} />
-          <POSFooterBtn label="[F4] Thanh toán" active onClick={handleCheckout} />
+          <POSFooterBtn label="[F3] Nhập hàng" onClick={() => showNotification("Chức năng Nhập hàng đang được phát triển", "error")} />
+          <POSFooterBtn label="[F4] Thanh toán" active onClick={handleCheckout} disabled={isSubmitting} />
           <POSFooterBtn label="[F5] In hóa đơn" onClick={handlePrint} />
-          <POSFooterBtn label="[F6] Hủy bỏ" error onClick={() => { if(window.confirm("Hủy bỏ đơn hàng?")) setCart([]); }} />
+          <POSFooterBtn label="[F6] Hủy bỏ" error onClick={() => { if(confirm("Hủy bỏ đơn hàng?")) { setCart([]); showNotification("Đã hủy đơn hàng"); } }} />
         </footer>
       </div>
+
+      {/* Notification */}
+      <AnimatePresence>
+        {notification && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: 20, x: "-50%" }}
+            className={cn(
+              "fixed bottom-8 left-1/2 z-[100] flex items-center gap-3 px-6 py-3 rounded-2xl shadow-2xl border backdrop-blur-md",
+              notification.type === 'success' 
+                ? "bg-green-500/90 border-green-400 text-white" 
+                : "bg-red-500/90 border-red-400 text-white"
+            )}
+          >
+            {notification.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+            <span className="font-bold tracking-tight">{notification.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -423,13 +496,15 @@ function POSInput({ label, value }: any) {
   );
 }
 
-function POSFooterBtn({ label, active, error, onClick }: any) {
+function POSFooterBtn({ label, active, error, onClick, disabled }: any) {
   return (
     <button 
       onClick={onClick}
+      disabled={disabled}
       className={cn(
         "px-3 py-1 rounded transition-all text-[10px] font-bold uppercase tracking-wider",
-        active ? "bg-white/20 text-white" : error ? "text-error-container hover:bg-error/10" : "text-white/70 hover:bg-white/10"
+        active ? "bg-white/20 text-white" : error ? "text-error-container hover:bg-error/10" : "text-white/70 hover:bg-white/10",
+        disabled && "opacity-50 cursor-not-allowed"
       )}
     >
       {label}

@@ -2,7 +2,7 @@ import axios from "axios";
 import { Product, Customer, Staff, Invoice } from "../types";
 
 const api = axios.create({
-  baseURL: "/api",
+  baseURL: import.meta.env.VITE_API_URL || "/api",
 });
 
 export const productService = {
@@ -30,4 +30,8 @@ export const invoiceService = {
   getAll: () => api.get<Invoice[]>("/invoices"),
   create: (data: Partial<Invoice>) => api.post<Invoice>("/invoices", data),
   delete: (id: string) => api.delete(`/invoices/${id}`),
+};
+
+export const systemService = {
+  getSettings: () => api.get<any>("/system/settings"),
 };

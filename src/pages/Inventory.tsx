@@ -41,7 +41,8 @@ export default function Inventory() {
   const filteredInventory = inventory.filter(item => 
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.batch && item.batch.toLowerCase().includes(searchTerm.toLowerCase()))
+    (item.batch && item.batch.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (item.expiry && item.expiry.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const getStatus = (item: Product) => {
@@ -73,7 +74,7 @@ export default function Inventory() {
       </div>
 
       <div className="flex-1 flex px-8 pb-8 gap-6 overflow-hidden">
-        <div className="w-3/5 flex flex-col bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden border border-outline-variant/10">
+        <div className="w-2/3 flex flex-col bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden border border-outline-variant/10">
           <div className="p-4 bg-surface flex justify-between items-center border-b border-outline-variant/10">
             <div className="relative w-full max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant w-4 h-4" />
@@ -102,6 +103,8 @@ export default function Inventory() {
               <thead className="sticky top-0 bg-surface-container-low/95 backdrop-blur-md z-10">
                 <tr>
                   <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Mặt hàng</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest text-center">Số lô</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest text-center">Hạn dùng</th>
                   <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest text-center">Tồn kho</th>
                   <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest text-center">ĐVT</th>
                   <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Tình trạng</th>
@@ -110,11 +113,11 @@ export default function Inventory() {
               <tbody className="divide-y divide-outline-variant/10">
                 {loading ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-20 text-center text-on-surface-variant italic">Đang tải dữ liệu...</td>
+                    <td colSpan={6} className="px-6 py-20 text-center text-on-surface-variant italic">Đang tải dữ liệu...</td>
                   </tr>
                 ) : filteredInventory.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-20 text-center text-on-surface-variant italic">Không tìm thấy mặt hàng nào.</td>
+                    <td colSpan={6} className="px-6 py-20 text-center text-on-surface-variant italic">Không tìm thấy mặt hàng nào.</td>
                   </tr>
                 ) : filteredInventory.map((item) => {
                   const status = getStatus(item);
@@ -133,6 +136,8 @@ export default function Inventory() {
                           <span className="text-[10px] text-on-surface-variant font-mono uppercase">{item.id} • {item.category}</span>
                         </div>
                       </td>
+                      <td className="px-6 py-4 text-center text-xs font-mono text-on-surface-variant">{item.batch || "---"}</td>
+                      <td className="px-6 py-4 text-center text-xs text-on-surface-variant">{item.expiry || "---"}</td>
                       <td className="px-6 py-4 text-center">
                         <span className={cn(
                           "text-sm font-black",
@@ -160,7 +165,7 @@ export default function Inventory() {
           </div>
         </div>
 
-        <div className="w-2/5 flex flex-col gap-6 overflow-hidden">
+        <div className="w-1/3 flex flex-col gap-6 overflow-hidden">
           {selectedItem ? (
             <>
               <div className="bg-surface-container-lowest rounded-xl shadow-lg border border-primary-container/5 overflow-hidden flex flex-col">
