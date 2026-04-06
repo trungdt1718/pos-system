@@ -2,13 +2,20 @@ import React, { useEffect, useState } from "react";
 import { invoiceService } from "../services/api";
 import { Invoice } from "../types";
 import { formatCurrency, cn } from "../lib/utils";
-import { Search, Filter, Download, Trash2, Eye, FileText } from "lucide-react";
-import { motion } from "motion/react";
+import { Search, Filter, Download, Trash2, Eye, FileText, CheckCircle2, AlertCircle } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 
 export default function Orders() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notification, setNotification] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+
+  const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
 
   useEffect(() => {
     loadInvoices();
@@ -21,11 +28,17 @@ export default function Orders() {
   };
 
   const handleDelete = (id: string) => {
-    if (window.confirm(`Bạn có chắc chắn muốn xóa đơn hàng ${id}?`)) {
-      invoiceService.delete(id).then(() => {
-        alert("Xóa đơn hàng thành công!");
-        loadInvoices();
-      });
+    if (!isSubmitting) {
+      if (confirm(`Bạn có chắc chắn muốn xóa đơn hàng ${id}?`)) {
+        setIsSubmitting(true);
+        invoiceService.delete(id).then(() => {
+          showNotification("Xóa đơn hàng thành công!");
+          loadInvoices();
+        }).catch(err => {
+          console.error(err);
+          showNotification("Lỗi khi xóa đơn hàng", "error");
+        }).finally(() => setIsSubmitting(false));
+      }
     }
   };
 
@@ -102,7 +115,8 @@ export default function Orders() {
                       </button>
                       <button 
                         onClick={() => handleDelete(inv.id)}
-                        className="p-2 text-error hover:bg-error/10 rounded-lg transition-colors" 
+                        disabled={isSubmitting}
+                        className="p-2 text-error hover:bg-error/10 rounded-lg transition-colors disabled:opacity-50" 
                         title="Xóa đơn hàng"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -115,6 +129,26 @@ export default function Orders() {
           </table>
         </div>
       </div>
+
+      {/* Notification */}
+      <AnimatePresence>
+        {notification && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: 20, x: "-50%" }}
+            className={cn(
+              "fixed bottom-8 left-1/2 z-[100] flex items-center gap-3 px-6 py-3 rounded-2xl shadow-2xl border backdrop-blur-md",
+              notification.type === 'success' 
+                ? "bg-green-500/90 border-green-400 text-white" 
+                : "bg-red-500/90 border-red-400 text-white"
+            )}
+          >
+            {notification.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+            <span className="font-bold tracking-tight">{notification.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

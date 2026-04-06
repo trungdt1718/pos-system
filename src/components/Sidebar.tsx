@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { cn } from "../lib/utils";
 
+import { systemService } from "../services/api";
+
 const navItems = [
   { icon: LayoutDashboard, label: "Tổng quan", path: "/" },
   { icon: Users, label: "Nhân viên", path: "/staff" },
@@ -25,6 +27,12 @@ const navItems = [
 ];
 
 export default function Sidebar() {
+  const [settings, setSettings] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    systemService.getSettings().then(res => setSettings(res.data));
+  }, []);
+
   return (
     <aside className="h-screen w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant/10 flex flex-col py-6 z-50">
       <div className="px-6 mb-8 flex items-center gap-3">
@@ -32,7 +40,7 @@ export default function Sidebar() {
           <Store className="text-white w-6 h-6" />
         </div>
         <div className="flex flex-col">
-          <span className="text-xl font-black text-primary-container tracking-tighter">Sumi.Mart</span>
+          <span className="text-xl font-black text-primary-container tracking-tighter">{settings?.tendv || "Sumi.Mart"}</span>
           <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant opacity-70">Hệ thống quản trị</span>
         </div>
       </div>

@@ -13,8 +13,8 @@ import {
   Settings
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { invoiceService, productService } from "../services/api";
-import { Invoice, Product } from "../types";
+import { invoiceService, productService, customerService } from "../services/api";
+import { Invoice, Product, Customer } from "../types";
 import { formatCurrency, cn } from "../lib/utils";
 import { motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
@@ -31,12 +31,17 @@ const chartData = [
 export default function Dashboard() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     invoiceService.getAll().then(res => setInvoices(res.data));
     productService.getAll().then(res => setProducts(res.data));
+    customerService.getAll().then(res => setCustomers(res.data));
   }, []);
+
+  const todayRevenue = invoices.reduce((acc, inv) => acc + inv.total, 0);
+  const totalStock = products.reduce((acc, p) => acc + (p.stock || 0), 0);
 
   const handleQuickAction = (label: string) => {
     switch (label) {
@@ -65,7 +70,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KPICard 
           title="Doanh thu hôm nay" 
-          value="25.400.000đ" 
+          value={formatCurrency(todayRevenue)} 
           trend="+12.5%" 
           icon={TrendingUp} 
           color="primary" 
@@ -73,7 +78,7 @@ export default function Dashboard() {
         />
         <KPICard 
           title="Đơn hàng mới" 
-          value="142 Đơn" 
+          value={`${invoices.length} Đơn`} 
           trend="+8%" 
           icon={ShoppingBag} 
           color="tertiary" 
@@ -81,7 +86,7 @@ export default function Dashboard() {
         />
         <KPICard 
           title="Tồn kho hiện tại" 
-          value={`${products.reduce((acc, p) => acc + (p.stock || 0), 0)} SP`} 
+          value={`${totalStock} SP`} 
           trend="-2.1%" 
           icon={Package} 
           color="blue" 
@@ -90,7 +95,7 @@ export default function Dashboard() {
         />
         <KPICard 
           title="Khách hàng mới" 
-          value="45 TV" 
+          value={`${customers.length} TV`} 
           trend="+15%" 
           icon={Users} 
           color="purple" 

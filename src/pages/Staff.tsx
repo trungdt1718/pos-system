@@ -8,6 +8,7 @@ export default function StaffPage() {
   const [staff, setStaff] = useState<Staff[]>([]);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<Partial<Staff>>({
     name: "",
     gender: "Nam",
@@ -22,6 +23,13 @@ export default function StaffPage() {
     loadStaff();
   }, []);
 
+  const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+  const showNotification = (message: string, type: "success" | "error" = "success") => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
   const loadStaff = () => {
     staffService.getAll().then(res => {
       setStaff(res.data);
@@ -32,20 +40,25 @@ export default function StaffPage() {
   };
 
   const handleUpdate = () => {
-    if (selectedStaff) {
+    if (selectedStaff && !isSubmitting) {
+      setIsSubmitting(true);
       staffService.update(selectedStaff.id, selectedStaff).then(() => {
         loadStaff();
-        alert("Cập nhật nhân viên thành công!");
-      });
+        showNotification("Cập nhật nhân viên thành công!");
+      }).finally(() => setIsSubmitting(false));
     }
   };
 
   const handleDelete = () => {
-    if (selectedStaff && window.confirm(`Bạn có chắc chắn muốn xóa nhân viên ${selectedStaff.name}?`)) {
-      staffService.delete(selectedStaff.id).then(() => {
-        setSelectedStaff(null);
-        loadStaff();
-      });
+    if (selectedStaff && !isSubmitting) {
+      if (confirm(`Bạn có chắc chắn muốn xóa nhân viên ${selectedStaff.name}?`)) {
+        setIsSubmitting(true);
+        staffService.delete(selectedStaff.id).then(() => {
+          setSelectedStaff(null);
+          loadStaff();
+          showNotification("Xóa nhân viên thành công!");
+        }).finally(() => setIsSubmitting(false));
+      }
     }
   };
 
@@ -59,18 +72,23 @@ export default function StaffPage() {
       status: "Đang làm việc",
       role: "Nhân viên bán hàng",
       email: "",
-      phone: ""
+      phone: "",
+      password: ""
     });
   };
 
   const handleSaveNew = () => {
-    if (!formData.name) return alert("Vui lòng nhập tên nhân viên!");
+    if (!formData.name) return showNotification("Vui lòng nhập tên nhân viên!", "error");
+    if (!formData.username) return showNotification("Vui lòng nhập tài khoản!", "error");
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
     staffService.create(formData).then((res) => {
       setIsAdding(false);
       loadStaff();
       setSelectedStaff(res.data);
-      alert("Thêm nhân viên mới thành công!");
-    });
+      showNotification("Thêm nhân viên mới thành công!");
+    }).finally(() => setIsSubmitting(false));
   };
 
   return (
@@ -85,6 +103,14 @@ export default function StaffPage() {
           <h1 className="text-3xl font-black text-primary-container tracking-tight">Nhân sự</h1>
         </div>
         <div className="flex gap-3">
+          {notification && (
+            <div className={cn(
+              "fixed top-4 right-4 px-6 py-3 rounded-lg shadow-xl z-50 animate-in fade-in slide-in-from-top-4 duration-300",
+              notification.type === "success" ? "bg-green-600 text-white" : "bg-red-600 text-white"
+            )}>
+              <p className="font-bold text-sm">{notification.message}</p>
+            </div>
+          )}
           <button className="bg-surface-container-highest text-on-surface flex items-center gap-2 px-4 py-2 rounded-md font-bold text-sm transition-all active:scale-95">
             <Download className="w-4 h-4" /> Xuất Excel
           </button>
@@ -190,8 +216,23 @@ export default function StaffPage() {
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5 block">Mật khẩu</label>
-                    <input className="w-full bg-surface border border-outline-variant/30 rounded-md px-3 py-2 text-sm" type="password" placeholder="********" />
+                    <input 
+                      className="w-full bg-surface border border-outline-variant/30 rounded-md px-3 py-2 text-sm" 
+                      type="password" 
+                      placeholder="********" 
+                      value={formData.password || ""}
+                      onChange={(e) => setFormData({...formData, password: e.target.value})}
+                    />
                   </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5 block">Số điện thoại</label>
+                  <input 
+                    className="w-full bg-surface border border-outline-variant/30 rounded-md px-3 py-2 text-sm" 
+                    placeholder="09xx xxx xxx"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  />
                 </div>
                 <div>
                   <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5 block">Email công việc</label>
@@ -246,8 +287,21 @@ export default function StaffPage() {
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5 block">Mật khẩu</label>
-                    <input className="w-full bg-surface border border-outline-variant/30 rounded-md px-3 py-2 text-sm" type="password" value="********" readOnly />
+                    <input 
+                      className="w-full bg-surface border border-outline-variant/30 rounded-md px-3 py-2 text-sm" 
+                      type="password" 
+                      placeholder="Nhập để đổi mật khẩu" 
+                      onChange={(e) => setSelectedStaff({...selectedStaff, password: e.target.value})}
+                    />
                   </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5 block">Số điện thoại</label>
+                  <input 
+                    className="w-full bg-surface border border-outline-variant/30 rounded-md px-3 py-2 text-sm" 
+                    value={selectedStaff.phone}
+                    onChange={(e) => setSelectedStaff({...selectedStaff, phone: e.target.value})}
+                  />
                 </div>
                 <div>
                   <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5 block">Email công việc</label>
@@ -264,8 +318,31 @@ export default function StaffPage() {
                     value={selectedStaff.role}
                     onChange={(e) => setSelectedStaff({...selectedStaff, role: e.target.value})}
                   >
+                    <option value="Quản trị hệ thống">Quản trị hệ thống</option>
                     <option value="Nhân viên bán hàng">Nhân viên bán hàng</option>
                     <option value="Quản lý kho">Quản lý kho</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5 block">Giới tính</label>
+                  <select 
+                    className="w-full bg-surface border border-outline-variant/30 rounded-md px-3 py-2 text-sm"
+                    value={selectedStaff.gender}
+                    onChange={(e) => setSelectedStaff({...selectedStaff, gender: e.target.value})}
+                  >
+                    <option value="Nam">Nam</option>
+                    <option value="Nữ">Nữ</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5 block">Tình trạng</label>
+                  <select 
+                    className="w-full bg-surface border border-outline-variant/30 rounded-md px-3 py-2 text-sm"
+                    value={selectedStaff.status}
+                    onChange={(e) => setSelectedStaff({...selectedStaff, status: e.target.value})}
+                  >
+                    <option value="Đang làm việc">Đang làm việc</option>
+                    <option value="Nghỉ việc">Nghỉ việc</option>
                   </select>
                 </div>
               </>
@@ -286,24 +363,30 @@ export default function StaffPage() {
                 </button>
                 <button 
                   onClick={handleSaveNew}
-                  className="px-5 py-2 rounded-md font-bold text-sm bg-gradient-to-br from-primary to-primary-container text-white shadow-md hover:brightness-110 transition-all active:scale-95 flex items-center gap-2"
+                  disabled={isSubmitting}
+                  className={cn(
+                    "px-5 py-2 rounded-md font-bold text-sm bg-gradient-to-br from-primary to-primary-container text-white shadow-md transition-all flex items-center gap-2",
+                    isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:brightness-110 active:scale-95"
+                  )}
                 >
-                  <Plus className="w-4 h-4" /> Lưu nhân viên
+                  <Plus className={cn("w-4 h-4", isSubmitting && "animate-spin")} /> {isSubmitting ? "Đang lưu..." : "Lưu nhân viên"}
                 </button>
               </>
             ) : selectedStaff ? (
               <>
                 <button 
                   onClick={handleDelete}
-                  className="px-5 py-2 rounded-md font-bold text-sm bg-surface-container-lowest text-error border border-error/20 hover:bg-error/10 transition-all active:scale-95 flex items-center gap-2"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 rounded-md font-bold text-sm bg-surface-container-lowest text-error border border-error/20 hover:bg-error/10 transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50"
                 >
                   <Trash2 className="w-4 h-4" /> Xóa
                 </button>
                 <button 
                   onClick={handleUpdate}
-                  className="px-5 py-2 rounded-md font-bold text-sm bg-surface-container-lowest text-on-surface border border-outline-variant/30 hover:bg-surface-container-high transition-all active:scale-95 flex items-center gap-2"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 rounded-md font-bold text-sm bg-surface-container-lowest text-on-surface border border-outline-variant/30 hover:bg-surface-container-high transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50"
                 >
-                  <Edit className="w-4 h-4" /> Chỉnh
+                  <Edit className="w-4 h-4" /> {isSubmitting ? "Đang lưu..." : "Chỉnh"}
                 </button>
                 <button 
                   onClick={startAdding}

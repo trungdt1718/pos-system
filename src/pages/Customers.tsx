@@ -2,12 +2,21 @@ import React, { useEffect, useState } from "react";
 import { customerService } from "../services/api";
 import { Customer } from "../types";
 import { formatCurrency, cn } from "../lib/utils";
-import { Filter, Download, Mail, Phone, Camera, Edit, Trash2, Plus, X, TrendingUp } from "lucide-react";
+import { Filter, Download, Mail, Phone, Camera, Edit, Trash2, Plus, X, TrendingUp, CheckCircle2, AlertCircle } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 
 export default function Customers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notification, setNotification] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+
+  const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
   const [formData, setFormData] = useState<Partial<Customer>>({
     name: "",
     gender: "Nam",
@@ -32,20 +41,31 @@ export default function Customers() {
   };
 
   const handleUpdate = () => {
-    if (selectedCustomer) {
+    if (selectedCustomer && !isSubmitting) {
+      setIsSubmitting(true);
       customerService.update(selectedCustomer.id, selectedCustomer).then(() => {
         loadCustomers();
-        alert("Cập nhật khách hàng thành công!");
-      });
+        showNotification("Cập nhật khách hàng thành công!");
+      }).catch(err => {
+        console.error(err);
+        showNotification("Lỗi khi cập nhật khách hàng", "error");
+      }).finally(() => setIsSubmitting(false));
     }
   };
 
   const handleDelete = () => {
-    if (selectedCustomer && window.confirm(`Bạn có chắc chắn muốn xóa khách hàng ${selectedCustomer.name}?`)) {
-      customerService.delete(selectedCustomer.id).then(() => {
-        setSelectedCustomer(null);
-        loadCustomers();
-      });
+    if (selectedCustomer && !isSubmitting) {
+      if (confirm(`Bạn có chắc chắn muốn xóa khách hàng ${selectedCustomer.name}?`)) {
+        setIsSubmitting(true);
+        customerService.delete(selectedCustomer.id).then(() => {
+          setSelectedCustomer(null);
+          loadCustomers();
+          showNotification("Đã xóa khách hàng!");
+        }).catch(err => {
+          console.error(err);
+          showNotification("Lỗi khi xóa khách hàng", "error");
+        }).finally(() => setIsSubmitting(false));
+      }
     }
   };
 
@@ -64,13 +84,19 @@ export default function Customers() {
   };
 
   const handleSaveNew = () => {
-    if (!formData.name) return alert("Vui lòng nhập tên khách hàng!");
+    if (!formData.name) return showNotification("Vui lòng nhập tên khách hàng!", "error");
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
     customerService.create(formData).then((res) => {
       setIsAdding(false);
       loadCustomers();
       setSelectedCustomer(res.data);
-      alert("Thêm khách hàng mới thành công!");
-    });
+      showNotification("Thêm khách hàng mới thành công!");
+    }).catch(err => {
+      console.error(err);
+      showNotification("Lỗi khi thêm khách hàng", "error");
+    }).finally(() => setIsSubmitting(false));
   };
 
   return (
@@ -326,21 +352,27 @@ export default function Customers() {
             {isAdding ? (
               <button 
                 onClick={handleSaveNew}
-                className="flex-1 py-3 px-4 bg-gradient-to-br from-primary to-primary-container text-white font-bold text-sm rounded-lg shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2"
+                disabled={isSubmitting}
+                className={cn(
+                  "flex-1 py-3 px-4 bg-gradient-to-br from-primary to-primary-container text-white font-bold text-sm rounded-lg shadow-lg transition-all flex items-center justify-center gap-2",
+                  isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:brightness-110 active:scale-95"
+                )}
               >
-                <Plus className="w-4 h-4" /> Lưu khách hàng
+                <Plus className={cn("w-4 h-4", isSubmitting && "animate-spin")} /> {isSubmitting ? "Đang lưu..." : "Lưu khách hàng"}
               </button>
             ) : selectedCustomer ? (
               <>
                 <button 
                   onClick={handleDelete}
-                  className="p-3 bg-error-container text-on-error-container rounded-lg hover:opacity-80 transition-all"
+                  disabled={isSubmitting}
+                  className="p-3 bg-error-container text-on-error-container rounded-lg hover:opacity-80 transition-all disabled:opacity-50"
                 >
                   <Trash2 className="w-5 h-5" />
                 </button>
                 <button 
                   onClick={handleUpdate}
-                  className="p-3 bg-secondary-container text-on-secondary-container rounded-lg hover:opacity-80 transition-all"
+                  disabled={isSubmitting}
+                  className="p-3 bg-secondary-container text-on-secondary-container rounded-lg hover:opacity-80 transition-all disabled:opacity-50"
                 >
                   <Edit className="w-5 h-5" />
                 </button>
@@ -362,6 +394,26 @@ export default function Customers() {
           </div>
         </div>
       </section>
+
+      {/* Notification */}
+      <AnimatePresence>
+        {notification && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: 20, x: "-50%" }}
+            className={cn(
+              "fixed bottom-8 left-1/2 z-[100] flex items-center gap-3 px-6 py-3 rounded-2xl shadow-2xl border backdrop-blur-md",
+              notification.type === 'success' 
+                ? "bg-green-500/90 border-green-400 text-white" 
+                : "bg-red-500/90 border-red-400 text-white"
+            )}
+          >
+            {notification.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+            <span className="font-bold tracking-tight">{notification.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
