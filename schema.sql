@@ -174,7 +174,7 @@ INSERT INTO dmnhanvien (manv, hoten, taikhoan, matkhau, maloainv) VALUES
 ON CONFLICT DO NOTHING;
 
 INSERT INTO hethong (id, tents, diengiai, giatri) VALUES 
-(5.000, 'tendv', 'Tên đơn vị', 'Quán Tám bánh mì bò kho'),
+(5.000, 'tendv', 'Tên đơn vị', 'Sumi Mart'),
 (6.000, 'diachi', 'Địa chỉ đơn vị', '114 Mậu Thân, Ninh Kiều, Cần Thơ'),
 (7.000, 'dienthoai', 'Điện thoại', '0795986289'),
 (1.000, 'logo', 'Logo đơn vị', '')
