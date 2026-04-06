@@ -106,10 +106,4 @@ pm2 save
 
 ---
 
-## 6. Khởi tạo Dữ liệu mẫu
-
-Sau khi chạy project, bạn có thể nhấn nút **"KHỞI TẠO DỮ LIỆU MẪU"** ở góc trên bên phải màn hình POS để tự động thêm sản phẩm và khách hàng mẫu vào database.
-
----
-
 Chúc bạn thành công!
