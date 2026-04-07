@@ -33,6 +33,7 @@ function getPageTitle(pathname: string) {
     case "/inventory": return "Quản lý kho hàng";
     case "/orders": return "Lịch sử đơn hàng";
     case "/reports": return "Báo cáo thống kê";
+    case "/settings": return "Thiết lập hệ thống";
     case "/price-adjustment": return "Hiệu chỉnh giá bán";
     default: return "Sumi.Mart";
   }

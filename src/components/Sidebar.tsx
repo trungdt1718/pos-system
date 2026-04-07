@@ -9,7 +9,8 @@ import {
   BarChart3, 
   Settings, 
   LogOut,
-  Store
+  Store,
+  TrendingUp
 } from "lucide-react";
 import { cn } from "../lib/utils";
 
@@ -23,7 +24,8 @@ const navItems = [
   { icon: Users, label: "Khách hàng", path: "/customers" },
   { icon: Warehouse, label: "Kho hàng", path: "/inventory" },
   { icon: BarChart3, label: "Báo cáo", path: "/reports" },
-  { icon: Settings, label: "Chỉnh giá", path: "/price-adjustment" },
+  { icon: TrendingUp, label: "Chỉnh giá", path: "/price-adjustment" },
+  { icon: Settings, label: "Thiết lập", path: "/settings" },
 ];
 
 export default function Sidebar() {

@@ -15,6 +15,7 @@ import Orders from "./pages/Orders";
 import Inventory from "./pages/Inventory";
 import Reports from "./pages/Reports";
 import PriceAdjustment from "./pages/PriceAdjustment";
+import Settings from "./pages/Settings";
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="orders" element={<Orders />} />
           <Route path="reports" element={<Reports />} />
           <Route path="price-adjustment" element={<PriceAdjustment />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
         <Route path="/pos" element={<POS />} />
       </Routes>
