@@ -1,9 +1,19 @@
 import axios from "axios";
 import { Product, Customer, Staff, Invoice } from "../types";
 
+const getBaseURL = () => {
+  const customUrl = localStorage.getItem("sumi_mart_api_url");
+  return customUrl || import.meta.env.VITE_API_URL || "/api";
+};
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "/api",
+  baseURL: getBaseURL(),
 });
+
+// Update baseURL if changed manually (optional, but good for consistency)
+export const updateApiBaseURL = (newUrl: string) => {
+  api.defaults.baseURL = newUrl;
+};
 
 export const productService = {
   getAll: () => api.get<Product[]>("/products"),

@@ -105,4 +105,36 @@ pm2 save
 
 ---
 
+## 6. Khởi tạo Dữ liệu mẫu
+
+Sau khi chạy project, bạn có thể nhấn nút **"KHỞI TẠO DỮ LIỆU MẪU"** ở góc trên bên phải màn hình POS để tự động thêm sản phẩm và khách hàng mẫu vào database.
+
+---
+
+## 7. Tính năng Kiểm tra Nguồn dữ liệu (Database Status)
+
+Để giúp khách hàng xác minh dữ liệu đang được lấy từ đâu, hệ thống đã tích hợp một thanh trạng thái tại Header:
+- **Màu xanh (Database)**: Kết nối PostgreSQL thành công.
+- **Màu vàng (In-Memory)**: Kết nối database thất bại, hệ thống đang dùng dữ liệu tạm thời (nếu có cấu hình).
+
+Bạn có thể kiểm tra trực tiếp qua API: `GET /api/db-status`.
+
+## 8. Cấu hình Database Động
+
+Hệ thống cho phép thay đổi chuỗi kết nối Database trực tiếp từ giao diện **Thiết lập**:
+1. Truy cập mục **Thiết lập** từ menu bên trái.
+2. Nhập chuỗi kết nối mới (`DATABASE_URL`) vào ô cấu hình.
+3. Nhấn **Cập nhật & Thử lại**.
+4. Hệ thống sẽ tự động khởi tạo lại bộ kết nối mà không cần khởi động lại server.
+
+## 9. Cấu hình API URL Động
+
+Nếu bạn muốn kết nối Frontend này với một máy chủ Backend khác (ví dụ: chạy trên Render hoặc Local):
+1. Truy cập mục **Thiết lập**.
+2. Trong phần **Kết nối API**, nhập địa chỉ mới (ví dụ: `https://api-cua-ban.onrender.com/api`).
+3. Nhấn **Lưu cấu hình API**.
+4. Trình duyệt sẽ ghi nhớ lựa chọn này cho các lần truy cập sau. Bạn có thể nhấn nút **Reset** (biểu tượng xoay) để quay về mặc định.
+
+---
+
 Chúc bạn thành công!

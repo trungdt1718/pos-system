@@ -11,22 +11,70 @@ const { Pool } = pg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// --- Mock Data for In-Memory Fallback ---
+let mockProducts: any[] = [
+  { id: "HH001", name: "Sữa tươi Vinamilk 1L", category: "Sữa & Chế phẩm", unit: "Hộp", price: 32000, stock: 150, batch: "L01", expiry: "2026-12-01", manufacturer: "Vinamilk", origin: "Việt Nam", supplier: "Vinamilk" },
+  { id: "HH002", name: "Gạo ST25 5kg", category: "Lương thực", unit: "Túi", price: 185000, stock: 45, batch: "G05", expiry: "2027-01-15", manufacturer: "Sóc Trăng", origin: "Việt Nam", supplier: "Đại lý Gạo" },
+  { id: "HH003", name: "Dầu ăn Tường An 1L", category: "Gia vị", unit: "Chai", price: 45000, stock: 80, batch: "D12", expiry: "2026-10-20", manufacturer: "Tường An", origin: "Việt Nam", supplier: "Tường An" }
+];
+
+let mockCustomers: any[] = [
+  { id: "KH001", name: "Nguyễn Văn A", phone: "0901234567", address: "123 Lê Lợi, Q.1, TP.HCM", type: "Thành viên", points: 150, totalSpent: 5000000 },
+  { id: "KH002", name: "Trần Thị B", phone: "0987654321", address: "456 Nguyễn Huệ, Q.1, TP.HCM", type: "VIP", points: 1200, totalSpent: 25000000 }
+];
+
+let mockStaff: any[] = [
+  { id: "NV001", name: "Lê Văn C", role: "Quản lý", phone: "0912345678", email: "levanc@sumimart.vn", status: "Đang làm việc", joinDate: "2024-01-10" },
+  { id: "NV002", name: "Phạm Thị D", role: "Thu ngân", phone: "0934567890", email: "phamthid@sumimart.vn", status: "Đang làm việc", joinDate: "2024-03-15" }
+];
+
+let mockInvoices: any[] = [];
+let mockSettings = { tendv: "Sumi.Mart Demo", diachi: "123 Demo Street", dienthoai: "0123456789" };
+
 // PostgreSQL Connection
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+let dbConnected = false;
+let currentConnectionString = process.env.DATABASE_URL;
+
+let pool = new Pool({
+  connectionString: currentConnectionString,
   ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false
 });
 
-// Kiểm tra kết nối ngay khi khởi động
-pool.connect((err, client, release) => {
-  if (err) {
-    return console.error('❌ LỖI KẾT NỐI DATABASE:', err.message);
+// Hàm khởi tạo/thay đổi kết nối
+async function initializePool(connStr: string | undefined) {
+  if (!connStr) {
+    dbConnected = false;
+    return;
   }
-  console.log('✅ KẾT NỐI POSTGRESQL THÀNH CÔNG!');
-  release();
-});
 
-// Helper for SQL queries
+  const newPool = new Pool({
+    connectionString: connStr,
+    ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false
+  });
+
+  try {
+    const client = await newPool.connect();
+    console.log('✅ KẾT NỐI DATABASE MỚI THÀNH CÔNG!');
+    
+    // Đóng pool cũ nếu có
+    if (pool) await pool.end();
+    
+    pool = newPool;
+    currentConnectionString = connStr;
+    dbConnected = true;
+    client.release();
+    return true;
+  } catch (err: any) {
+    console.error('❌ LỖI KẾT NỐI DATABASE MỚI:', err.message);
+    dbConnected = false;
+    return false;
+  }
+}
+
+// Khởi tạo lần đầu
+initializePool(currentConnectionString);
+
+// Helper for SQL queries - use the current pool
 const query = (text: string, params?: any[]) => pool.query(text, params);
 
 // Database Initialization
@@ -158,8 +206,36 @@ async function startServer() {
 
   // --- API Routes with PostgreSQL ---
 
+  // Database Status Check
+  app.get("/api/db-status", (req, res) => {
+    res.json({ 
+      source: dbConnected ? "PostgreSQL Database" : "In-Memory (Fallback/Error)",
+      connected: dbConnected,
+      connectionString: currentConnectionString ? `${currentConnectionString.substring(0, 15)}...` : "Chưa cấu hình",
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  // Update Database Config
+  app.post("/api/db-config", async (req, res) => {
+    const { connectionString } = req.body;
+    if (!connectionString) {
+      return res.status(400).json({ message: "Thiếu chuỗi kết nối (connectionString)" });
+    }
+
+    const success = await initializePool(connectionString);
+    if (success) {
+      res.json({ message: "Cập nhật kết nối thành công!", connected: true });
+    } else {
+      res.status(500).json({ message: "Kết nối thất bại. Vui lòng kiểm tra lại chuỗi kết nối.", connected: false });
+    }
+  });
+
   // Products
   app.get("/api/products", async (req, res) => {
+    if (!dbConnected) {
+      return res.json(mockProducts);
+    }
     try {
       const result = await query(`
         SELECT h.*, t.ton, t.solo, t.handung, pl.tenpl as nhomhh, dvt.tendvt as dvt, n.tennuocsx as tennuocsx, nc.tenncc as tenncc
@@ -192,6 +268,11 @@ async function startServer() {
   });
 
   app.post("/api/products", async (req, res) => {
+    if (!dbConnected) {
+      const newProduct = { id: `HH${Date.now().toString().slice(-6)}`, ...req.body };
+      mockProducts.push(newProduct);
+      return res.status(201).json(newProduct);
+    }
     const { name, price, stock, category, unit, manufacturer, origin, supplier } = req.body;
     try {
       const mapl = await getOrCreateRefId('dmphanloai', 'mapl', 'tenpl', category, 'PL');
@@ -222,6 +303,14 @@ async function startServer() {
 
   app.put("/api/products/:id", async (req, res) => {
     const { id } = req.params;
+    if (!dbConnected) {
+      const index = mockProducts.findIndex(p => p.id === id);
+      if (index !== -1) {
+        mockProducts[index] = { ...mockProducts[index], ...req.body };
+        return res.json(mockProducts[index]);
+      }
+      return res.status(404).json({ error: "Product not found" });
+    }
     const { name, price, stock, category, unit, manufacturer, origin, supplier } = req.body;
     try {
       const mapl = await getOrCreateRefId('dmphanloai', 'mapl', 'tenpl', category, 'PL');
@@ -252,10 +341,14 @@ async function startServer() {
 
   app.delete("/api/products/:id", async (req, res) => {
     const { id } = req.params;
+    if (!dbConnected) {
+      mockProducts = mockProducts.filter(p => p.id !== id);
+      return res.json({ success: true });
+    }
     try {
       await query("DELETE FROM pstonkho WHERE mahh = $1", [id]);
       await query("DELETE FROM dmhanghoa WHERE mahh = $1", [id]);
-      res.status(204).send();
+      res.json({ success: true });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Database error" });
@@ -264,6 +357,9 @@ async function startServer() {
 
   // Customers
   app.get("/api/customers", async (req, res) => {
+    if (!dbConnected) {
+      return res.json(mockCustomers);
+    }
     try {
       const result = await query("SELECT * FROM dmkh ORDER BY hoten ASC");
       const mapped = result.rows.map(c => ({
@@ -284,6 +380,11 @@ async function startServer() {
   });
 
   app.post("/api/customers", async (req, res) => {
+    if (!dbConnected) {
+      const newCustomer = { id: `KH${Date.now().toString().slice(-6)}`, ...req.body, totalSpent: 0 };
+      mockCustomers.push(newCustomer);
+      return res.status(201).json(newCustomer);
+    }
     const { name, gender, birthday, phone, email, address } = req.body;
     try {
       const makh = `KH${Date.now().toString().slice(-6)}`;
@@ -302,6 +403,14 @@ async function startServer() {
 
   app.put("/api/customers/:id", async (req, res) => {
     const { id } = req.params;
+    if (!dbConnected) {
+      const index = mockCustomers.findIndex(c => c.id === id);
+      if (index !== -1) {
+        mockCustomers[index] = { ...mockCustomers[index], ...req.body };
+        return res.json(mockCustomers[index]);
+      }
+      return res.status(404).json({ error: "Customer not found" });
+    }
     const { name, gender, birthday, phone, email, address } = req.body;
     try {
       const gioitinh = gender === "Nam" ? 1 : 0;
@@ -319,6 +428,10 @@ async function startServer() {
 
   app.delete("/api/customers/:id", async (req, res) => {
     const { id } = req.params;
+    if (!dbConnected) {
+      mockCustomers = mockCustomers.filter(c => c.id !== id);
+      return res.json({ success: true });
+    }
     try {
       await query("DELETE FROM dmkh WHERE makh = $1", [id]);
       res.status(204).send();
@@ -330,6 +443,9 @@ async function startServer() {
 
   // Staff
   app.get("/api/staff", async (req, res) => {
+    if (!dbConnected) {
+      return res.json(mockStaff);
+    }
     try {
       const result = await query(`
         SELECT s.*, l.tenloainv 
@@ -355,6 +471,11 @@ async function startServer() {
   });
 
   app.post("/api/staff", async (req, res) => {
+    if (!dbConnected) {
+      const newStaff = { id: `NV${Date.now().toString().slice(-6)}`, ...req.body, status: "Đang làm việc", joinDate: new Date().toISOString().split('T')[0] };
+      mockStaff.push(newStaff);
+      return res.status(201).json(newStaff);
+    }
     const { name, username, password, role, phone, email, gender } = req.body;
     try {
       const manv = `NV${Date.now().toString().slice(-6)}`;
@@ -380,6 +501,14 @@ async function startServer() {
 
   app.put("/api/staff/:id", async (req, res) => {
     const { id } = req.params;
+    if (!dbConnected) {
+      const index = mockStaff.findIndex(s => s.id === id);
+      if (index !== -1) {
+        mockStaff[index] = { ...mockStaff[index], ...req.body };
+        return res.json(mockStaff[index]);
+      }
+      return res.status(404).json({ error: "Staff not found" });
+    }
     const { name, username, password, role, phone, email, status, gender } = req.body;
     try {
       const maloainv = role === "Quản trị viên" || role === "Quản trị hệ thống" ? "QT" : "NV";
@@ -413,6 +542,10 @@ async function startServer() {
 
   app.delete("/api/staff/:id", async (req, res) => {
     const { id } = req.params;
+    if (!dbConnected) {
+      mockStaff = mockStaff.filter(s => s.id !== id);
+      return res.json({ success: true });
+    }
     try {
       await query("DELETE FROM dmnhanvien WHERE manv = $1", [id]);
       res.status(204).send();
@@ -424,6 +557,9 @@ async function startServer() {
 
   // Invoices
   app.get("/api/invoices", async (req, res) => {
+    if (!dbConnected) {
+      return res.json(mockInvoices);
+    }
     try {
       const result = await query(`
         SELECT i.*, c.hoten as customer_name,
@@ -450,6 +586,32 @@ async function startServer() {
 
   app.post("/api/invoices", async (req, res) => {
     const { customerId, items, total } = req.body;
+    if (!dbConnected) {
+      const sohd = `HD${Date.now().toString().slice(-8)}`;
+      const customer = mockCustomers.find(c => c.id === customerId);
+      const newInvoice = {
+        id: sohd,
+        customerName: customer ? customer.name : "Khách lẻ",
+        products: items.map((it: any) => it.name).join(", "),
+        time: new Date().toISOString(),
+        total: total,
+        status: "Hoàn tất"
+      };
+      mockInvoices.unshift(newInvoice);
+      
+      // Update stock in memory
+      items.forEach((item: any) => {
+        const p = mockProducts.find(prod => prod.id === item.id);
+        if (p) p.stock -= item.quantity;
+      });
+
+      // Update customer total spent in memory
+      if (customer) {
+        customer.totalSpent = (customer.totalSpent || 0) + total;
+      }
+
+      return res.status(201).json({ id: sohd });
+    }
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -511,6 +673,10 @@ async function startServer() {
 
   app.delete("/api/invoices/:id", async (req, res) => {
     const { id } = req.params;
+    if (!dbConnected) {
+      mockInvoices = mockInvoices.filter(i => i.id !== id);
+      return res.json({ success: true });
+    }
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -550,6 +716,9 @@ async function startServer() {
 
   // System Settings
   app.get("/api/system/settings", async (req, res) => {
+    if (!dbConnected) {
+      return res.json(mockSettings);
+    }
     try {
       const result = await query("SELECT tents, giatri FROM hethong");
       const settings: any = {};
