@@ -730,7 +730,7 @@ async function startServer() {
         res.json(settings);
       } else {
         res.json({
-          tendv: "Quán Tám bánh mì bò kho",
+          tendv: "Sumi Mart",
           diachi: "114 Mậu Thân, Ninh Kiều, Cần Thơ",
           dienthoai: "0795986289",
           logo: ""
