@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Search, Bell, UserCircle, Store, PersonStanding, CreditCard, History, Tag, ShoppingCart, Printer, Plus, Minus, Trash2, Save, X, CheckCircle2, AlertCircle } from "lucide-react";
+import { Search, Bell, UserCircle, Store, PersonStanding, CreditCard, History, Tag, ShoppingCart, Printer, Plus, Minus, Trash2, Save, X, CheckCircle2, AlertCircle, ChevronRight, RefreshCcw, Scan } from "lucide-react";
+import { Html5QrcodeScanner } from "html5-qrcode";
 import { motion, AnimatePresence } from "motion/react";
 import { formatCurrency, cn } from "../lib/utils";
 import { productService, customerService, staffService, invoiceService, systemService } from "../services/api";
@@ -18,11 +19,41 @@ export default function POS() {
   const [settings, setSettings] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
 
   const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
   };
+
+  useEffect(() => {
+    let scanner: Html5QrcodeScanner | null = null;
+    if (isScanning) {
+      scanner = new Html5QrcodeScanner(
+        "reader",
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        /* verbose= */ false
+      );
+      scanner.render((decodedText) => {
+        const product = products.find(p => p.id === decodedText);
+        if (product) {
+          addToCart(product);
+          showNotification(`Đã thêm: ${product.name}`);
+          setIsScanning(false);
+          if (scanner) scanner.clear();
+        } else {
+          showNotification(`Không tìm thấy sản phẩm: ${decodedText}`, "error");
+        }
+      }, (error) => {
+        // silence errors
+      });
+    }
+    return () => {
+      if (scanner) {
+        scanner.clear().catch(e => console.error("Error clearing scanner", e));
+      }
+    };
+  }, [isScanning, products]);
 
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   const customerSelectRef = React.useRef<HTMLSelectElement>(null);
@@ -188,45 +219,61 @@ export default function POS() {
           <Store className="text-primary w-6 h-6" />
           <h1 className="text-sm font-bold truncate max-w-[120px]">{settings?.tendv || "Sumi.Mart"}</h1>
         </div>
-        <button 
-          onClick={() => setIsCartOpen(true)}
-          className="relative p-2 text-primary bg-primary/10 rounded-lg"
-        >
-          <ShoppingCart className="w-5 h-5" />
-          {cart.length > 0 && (
-            <span className="absolute -top-1 -right-1 bg-error text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-bold">
-              {cart.reduce((acc, item) => acc + item.quantity, 0)}
-            </span>
-          )}
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setIsScanning(true)}
+            className="p-2 text-primary bg-primary/5 rounded-lg"
+          >
+            <Scan className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={() => setIsCartOpen(true)}
+            className="relative p-2 text-primary bg-primary/10 rounded-lg"
+          >
+            <ShoppingCart className="w-5 h-5" />
+            {cart.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-error text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-bold">
+                {cart.reduce((acc, item) => acc + item.quantity, 0)}
+              </span>
+            )}
+          </button>
+        </div>
       </header>
 
       {/* Sidebar POS */}
       <aside className={cn(
-        "fixed inset-y-0 left-0 z-50 w-full md:w-[320px] lg:w-[380px] md:relative flex flex-col bg-surface-container-low border-r border-outline-variant/10 transition-transform duration-300 md:translate-x-0",
-        isCartOpen ? "translate-x-0" : "-translate-x-full"
+        "fixed inset-0 z-[100] md:relative md:z-auto w-full md:w-[320px] lg:w-[380px] flex flex-col bg-surface-container-low md:border-r md:border-outline-variant/10 transition-transform duration-500 ease-in-out md:translate-x-0 bg-white md:bg-surface-container-low",
+        isCartOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"
       )}>
-        <div className="p-4 md:p-6 border-b border-outline-variant/10 flex items-center justify-between">
+        {/* Mobile Header for Sidebar */}
+        <div className="flex md:hidden items-center justify-between p-4 border-b border-outline-variant/10 bg-surface-container-low">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsCartOpen(false)}
+              className="p-2 -ml-2 text-on-surface-variant"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <h2 className="text-base font-black uppercase tracking-tight">Thanh toán đơn hàng</h2>
+          </div>
+          <p className="text-[10px] font-black text-primary uppercase bg-primary/10 px-2 py-1 rounded">#{invoiceId}</p>
+        </div>
+
+        <div className="hidden md:flex p-6 border-b border-outline-variant/10 flex-col gap-1">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center">
               <Store className="text-white w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-lg md:text-xl font-bold text-primary-container leading-tight truncate max-w-[150px]">
+              <h1 className="text-lg lg:text-xl font-bold text-primary-container leading-tight truncate max-w-[150px]">
                 {settings?.tendv || "Sumi.Mart POS"}
               </h1>
               <p className="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">NV: Admin</p>
             </div>
           </div>
-          <button 
-            onClick={() => setIsCartOpen(false)}
-            className="md:hidden p-2 hover:bg-surface-container-highest rounded-lg text-on-surface-variant"
-          >
-            <X className="w-6 h-6" />
-          </button>
         </div>
 
-        <nav className="flex md:flex-col overflow-x-auto md:overflow-x-visible border-b md:border-b-0 border-outline-variant/5">
+        <nav className="flex md:flex-col p-2 md:p-0 bg-surface-container-lowest md:bg-transparent border-b md:border-b-0 sticky top-0 z-10">
           <POSNavItem 
             icon={PersonStanding} 
             label="Khách" 
@@ -253,16 +300,19 @@ export default function POS() {
           />
         </nav>
 
-        <div className="p-4 md:p-6 flex-1 overflow-y-auto custom-scrollbar space-y-6 md:space-y-8">
+        <div className="p-4 md:p-6 flex-1 overflow-y-auto custom-scrollbar space-y-6 md:space-y-8 pb-32">
           {activeTab === "customer" && (
-            <div className="space-y-4">
-              <h2 className="text-xs font-bold text-on-surface-variant uppercase tracking-[0.1em]">Thông tin khách hàng</h2>
-              <div className="space-y-3">
-                <div className="flex flex-col gap-1">
-                  <label className="text-[11px] font-bold text-on-surface-variant uppercase">Chọn khách hàng</label>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em]">Thông tin khách hàng</h2>
+                <button className="text-[10px] font-black text-primary uppercase">+ Khách mới</button>
+              </div>
+              <div className="space-y-4">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest px-1">Chọn khách hàng</label>
                   <select 
                     ref={customerSelectRef}
-                    className="bg-white border border-outline-variant/15 rounded px-3 py-2 text-sm font-medium focus:ring-1 focus:ring-primary focus:outline-none w-full"
+                    className="bg-surface-container-low border border-outline-variant/20 rounded-xl px-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none w-full appearance-none shadow-sm"
                     value={selectedCustomer?.id || ""}
                     onChange={(e) => setSelectedCustomer(customers.find(c => c.id === e.target.value) || null)}
                   >
@@ -270,7 +320,7 @@ export default function POS() {
                   </select>
                 </div>
                 {selectedCustomer && (
-                  <div className="grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-1 gap-4">
                     <POSInput label="Địa chỉ" value={selectedCustomer.address} />
                     <POSInput label="Điện thoại" value={selectedCustomer.phone} />
                   </div>
@@ -280,31 +330,52 @@ export default function POS() {
           )}
 
           {activeTab === "payment" && (
-            <div className="bg-white p-4 md:p-6 rounded-xl border border-outline-variant/10 shadow-sm space-y-6">
-              <div className="flex justify-between items-end border-b border-surface-container-low pb-4">
-                <span className="text-[10px] md:text-xs font-bold text-on-surface-variant uppercase tracking-wider">Tổng tiền</span>
-                <span className="text-2xl md:text-3xl font-black text-error leading-none">{formatCurrency(total)}</span>
-              </div>
-              <div className="flex justify-between items-end border-b border-surface-container-low pb-4">
-                <div className="flex flex-col gap-2">
-                  <span className="text-[10px] md:text-xs font-bold text-on-surface-variant uppercase tracking-wider">Khách trả</span>
-                  <button 
-                    onClick={setExactChange}
-                    className="text-[9px] md:text-[10px] font-bold bg-primary/10 text-primary px-2 py-1 rounded hover:bg-primary/20 transition-colors w-fit"
-                  >
-                    Tiền mặt (Đủ)
-                  </button>
+            <div className="space-y-6">
+              <h2 className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em]">Chi tiết thanh toán</h2>
+              <div className="bg-primary/5 p-6 rounded-3xl border border-primary/10 space-y-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                <div className="flex justify-between items-end border-b border-primary/10 pb-4">
+                  <span className="text-[10px] font-black text-primary uppercase tracking-widest">Tổng tiền hóa đơn</span>
+                  <span className="text-3xl font-black text-primary leading-none">{formatCurrency(total)}</span>
                 </div>
-                <input 
-                  className="text-2xl md:text-3xl font-black text-primary-container text-right bg-transparent border-none p-0 w-32 md:w-48 focus:ring-0" 
-                  type="number" 
-                  value={paid}
-                  onChange={(e) => setPaid(Number(e.target.value))}
-                />
+                <div className="flex justify-between items-end border-b border-primary/10 pb-4">
+                  <div className="flex flex-col gap-2">
+                    <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Khách đưa</span>
+                    <button 
+                      onClick={setExactChange}
+                      className="text-[10px] font-black bg-primary text-white px-3 py-1.5 rounded-full hover:brightness-110 transition-all uppercase tracking-widest active:scale-95"
+                    >
+                      Tiền mặt (Đủ)
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <input 
+                      className="text-3xl font-black text-primary-container text-right bg-transparent border-none p-0 w-32 md:w-48 focus:ring-0 outline-none" 
+                      type="number" 
+                      value={paid}
+                      onChange={(e) => setPaid(Number(e.target.value))}
+                    />
+                    <span className="text-sm font-black text-primary opacity-50">₫</span>
+                  </div>
+                </div>
+                <div className="flex justify-between items-end">
+                  <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Tiền thối lại</span>
+                  <span className="text-3xl font-black text-tertiary-container leading-none">{formatCurrency(change)}</span>
+                </div>
               </div>
-              <div className="flex justify-between items-end">
-                <span className="text-[10px] md:text-xs font-bold text-on-surface-variant uppercase tracking-wider">Tiền thừa</span>
-                <span className="text-2xl md:text-3xl font-black text-tertiary-container leading-none">{formatCurrency(change)}</span>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <button className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border border-outline-variant/10 bg-white hover:bg-surface-container-low transition-all">
+                  <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                    <CreditCard className="w-5 h-5" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase">Chuyển khoản</span>
+                </button>
+                <button className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border border-primary/20 bg-primary/5 transition-all">
+                  <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
+                    <Store className="w-5 h-5" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase text-primary">Tiền mặt</span>
+                </button>
               </div>
             </div>
           )}
@@ -346,13 +417,18 @@ export default function POS() {
           )}
         </div>
 
-        <div className="p-4 md:p-6 bg-surface-container-highest/50 mt-auto">
+        <div className="fixed md:absolute bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md md:bg-surface-container-highest/50 border-t border-outline-variant/10 z-[110]">
           <button 
             onClick={handleCheckout}
-            className="w-full bg-gradient-to-br from-primary to-primary-container text-white font-bold py-3 md:py-4 rounded-xl flex items-center justify-center gap-3 shadow-lg hover:brightness-110 active:scale-[0.98] transition-all"
+            disabled={isSubmitting}
+            className="w-full bg-primary text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-primary/20 hover:brightness-110 active:scale-[0.98] transition-all uppercase tracking-[0.2em] text-xs"
           >
-            <CreditCard className="w-5 h-5 md:w-6 md:h-6" />
-            <span className="text-sm md:text-base">Thanh toán [F4]</span>
+            {isSubmitting ? (
+              <RefreshCcw className="w-5 h-5 animate-spin" />
+            ) : (
+              <CreditCard className="w-5 h-5" />
+            )}
+            <span>Xác nhận & In [F4]</span>
           </button>
         </div>
       </aside>
@@ -391,6 +467,13 @@ export default function POS() {
                 </div>
               )}
             </div>
+            <button 
+              onClick={() => setIsScanning(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl font-bold text-xs hover:bg-primary/20 transition-all active:scale-95"
+            >
+              <Scan className="w-4 h-4" />
+              Quét mã
+            </button>
           </div>
           <div className="flex items-center gap-4">
             <button 
@@ -438,13 +521,13 @@ export default function POS() {
           </div>
         </div>
 
-        <main className="flex-1 p-4 md:p-8 bg-surface-container-low flex flex-col gap-4 md:gap-6 overflow-hidden">
+        <main className="flex-1 p-4 md:p-8 bg-surface-container-low flex flex-col gap-4 md:gap-6 overflow-hidden pb-24 md:pb-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div className="flex flex-col">
               <h2 className="text-lg md:text-2xl font-bold tracking-tight text-primary-container">Đơn hàng hiện tại</h2>
               <p className="text-[10px] md:text-sm text-on-surface-variant">Hoá đơn #{invoiceId} | {new Date().toLocaleDateString()}</p>
             </div>
-            <div className="flex gap-2 w-full sm:w-auto">
+            <div className="hidden sm:flex gap-2 w-full sm:w-auto">
               <button 
                 onClick={handlePrint}
                 className="flex-1 sm:flex-none px-3 py-2 bg-white border border-outline-variant/30 rounded-lg text-xs font-bold text-on-surface flex items-center justify-center gap-2 hover:bg-surface-container-highest transition-colors"
@@ -460,7 +543,7 @@ export default function POS() {
             </div>
           </div>
 
-          <div className="flex-1 bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm flex flex-col border border-outline-variant/5">
+          <div className="flex-1 bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col border border-outline-variant/5">
             <div className="hidden sm:grid grid-cols-12 gap-4 px-6 py-4 bg-surface-container-low border-b border-outline-variant/10">
               <div className="col-span-1 text-[11px] font-bold text-on-surface-variant uppercase tracking-[0.1em]">Mã</div>
               <div className="col-span-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-[0.1em]">Tên hàng hóa</div>
@@ -472,19 +555,21 @@ export default function POS() {
             <div className="flex-1 overflow-y-auto custom-scrollbar">
               {cart.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-on-surface-variant opacity-30 gap-3 md:gap-4 p-8 text-center">
-                  <ShoppingCart className="w-12 h-12 md:w-16 md:h-16" />
-                  <p className="font-bold uppercase tracking-widest text-[10px] md:text-xs">Giỏ hàng đang trống</p>
+                  <div className="w-20 h-20 rounded-full bg-surface-container-high flex items-center justify-center">
+                    <ShoppingCart className="w-10 h-10" />
+                  </div>
+                  <p className="font-bold uppercase tracking-[0.2em] text-[10px] md:text-xs">Chưa có sản phẩm nào</p>
                 </div>
               ) : (
                 cart.map((item) => (
-                  <div key={item.id} className="p-4 sm:grid sm:grid-cols-12 sm:gap-4 sm:px-6 sm:py-4 items-center border-b border-outline-variant/5 hover:bg-surface-container-low transition-colors">
-                    {/* Mobile Item Vie */}
+                  <div key={item.id} className="p-4 sm:grid sm:grid-cols-12 sm:gap-4 sm:px-6 sm:py-4 items-center border-b border-outline-variant/5 hover:bg-surface-container-low transition-colors group">
+                    {/* Mobile Item View */}
                     <div className="sm:hidden flex justify-between items-start mb-3">
                       <div className="flex-1 pr-4">
                         <p className="text-sm font-bold text-on-surface line-clamp-1">{item.name}</p>
-                        <p className="text-[10px] text-on-surface-variant">{item.id} • {item.unit}</p>
+                        <p className="text-[10px] text-on-surface-variant font-bold">{item.id} • {item.unit} • <span className="text-primary">{formatCurrency(item.price)}</span></p>
                       </div>
-                      <button onClick={() => removeFromCart(item.id)} className="text-error p-1">
+                      <button onClick={() => removeFromCart(item.id)} className="text-error/30 hover:text-error transition-colors p-1">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -498,22 +583,30 @@ export default function POS() {
                     <div className="hidden sm:block col-span-2 text-xs font-semibold text-on-surface text-right">{formatCurrency(item.price)}</div>
                     
                     <div className="sm:col-span-2 flex justify-between sm:justify-center items-center">
-                      <div className="flex sm:hidden flex-col">
-                        <p className="text-xs font-bold text-primary">{formatCurrency(item.price)}</p>
-                      </div>
-                      <div className="flex items-center gap-3 bg-surface-container-low rounded-lg px-2 py-1.5 border border-outline-variant/10">
-                        <button onClick={() => updateQuantity(item.id, -1)} className="text-primary-container p-0.5"><Minus className="w-3.5 h-3.5" /></button>
-                        <span className="text-sm font-bold w-6 text-center">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.id, 1)} className="text-primary-container p-0.5"><Plus className="w-3.5 h-3.5" /></button>
+                      <div className="flex items-center gap-1 bg-surface-container-low rounded-xl px-1 py-1 border border-outline-variant/10">
+                        <button 
+                          onClick={() => updateQuantity(item.id, -1)} 
+                          className="w-8 h-8 flex items-center justify-center text-primary-container hover:bg-white rounded-lg transition-all active:scale-90"
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                        <span className="text-sm font-black w-8 text-center">{item.quantity}</span>
+                        <button 
+                          onClick={() => updateQuantity(item.id, 1)} 
+                          className="w-8 h-8 flex items-center justify-center text-primary-container hover:bg-white rounded-lg transition-all active:scale-90"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
                       </div>
                       <div className="sm:hidden text-right">
+                        <p className="text-[10px] font-black text-on-surface-variant uppercase opacity-40">Thành tiền</p>
                         <p className="text-sm font-black text-primary">{formatCurrency(item.price * item.quantity)}</p>
                       </div>
                     </div>
                     
                     <div className="hidden sm:flex col-span-2 items-center justify-end gap-3 lg:gap-4">
                       <span className="text-sm font-bold text-primary">{formatCurrency(item.price * item.quantity)}</span>
-                      <button onClick={() => removeFromCart(item.id)} className="text-error hover:bg-error/10 p-1.5 rounded transition-colors">
+                      <button onClick={() => removeFromCart(item.id)} className="text-error/30 hover:text-error hover:bg-error/5 p-2 rounded-lg transition-all opacity-0 group-hover:opacity-100">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -523,6 +616,31 @@ export default function POS() {
             </div>
           </div>
         </main>
+
+        {/* Mobile Summary Bar */}
+        <div className="md:hidden fixed bottom-14 left-0 right-0 p-4 bg-white/80 backdrop-blur-xl border-t border-outline-variant/10 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-40">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest leading-none mb-1">Tổng cộng</span>
+              <span className="text-xl font-black text-primary leading-none">{formatCurrency(total)}</span>
+            </div>
+            <button 
+              onClick={() => {
+                if (cart.length > 0) {
+                  setIsCartOpen(true);
+                  setActiveTab("payment");
+                } else {
+                  showNotification("Giỏ hàng trống", "error");
+                }
+              }}
+              className="flex-1 bg-primary text-white font-black py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-primary/20 active:scale-95 transition-all uppercase tracking-widest text-[11px]"
+            >
+              <CreditCard className="w-5 h-5" />
+              <span>Thanh toán {cart.length > 0 && `(${cart.length})`}</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
 
         <footer className="hidden md:flex h-12 bg-primary-container justify-around items-center px-4 shadow-2xl">
           <POSFooterBtn label="[F1] Thêm HĐ" onClick={() => { setCart([]); setPaid(0); searchInputRef.current?.focus(); }} />
@@ -553,6 +671,35 @@ export default function POS() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Barcode Scanner Modal */}
+      <AnimatePresence>
+        {isScanning && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] bg-black flex flex-col pt-safe"
+          >
+            <div className="flex items-center justify-between p-4 border-b border-white/10">
+              <h3 className="text-white font-bold uppercase tracking-widest text-sm">Quét mã vạch</h3>
+              <button 
+                onClick={() => setIsScanning(false)}
+                className="p-2 text-white bg-white/10 rounded-full"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="flex-1 flex flex-col items-center justify-center p-4">
+              <div id="reader" className="w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl border-4 border-primary/30" />
+              <div className="mt-8 text-center bg-white/5 p-6 rounded-2xl backdrop-blur-md border border-white/10 max-w-xs">
+                <p className="text-white font-black text-xs uppercase tracking-[0.2em] mb-2">Đang tìm mã vạch...</p>
+                <p className="text-white/50 text-[10px] leading-relaxed">Đưa mã vạch của sản phẩm vào khung ngắm để hệ thống tự động nhận diện.</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -562,23 +709,27 @@ function POSNavItem({ icon: Icon, label, active, onClick }: any) {
     <button 
       onClick={onClick}
       className={cn(
-        "w-full flex items-center gap-3 px-4 py-3 transition-all duration-200",
+        "flex-1 md:w-full flex flex-col md:flex-row items-center gap-1 md:gap-3 px-2 md:px-4 py-3 transition-all duration-300",
         active 
-          ? "text-primary-container font-bold border-r-4 border-primary bg-surface-container-highest/20" 
-          : "text-on-surface-variant hover:bg-surface-container-highest/30"
+          ? "text-primary font-black border-b-2 md:border-b-0 md:border-r-4 border-primary bg-primary/5" 
+          : "text-on-surface-variant/60 hover:bg-surface-container-highest/30"
       )}
     >
-      <Icon className="w-5 h-5" />
-      <span className="text-sm uppercase tracking-wide">{label}</span>
+      <Icon className={cn("w-5 h-5", active ? "scale-110" : "opacity-50")} />
+      <span className="text-[9px] md:text-sm uppercase tracking-widest font-black">{label}</span>
     </button>
   );
 }
 
 function POSInput({ label, value }: any) {
   return (
-    <div className="flex flex-col gap-1">
-      <label className="text-[11px] font-bold text-on-surface-variant uppercase">{label}</label>
-      <input className="bg-white border border-outline-variant/15 rounded px-3 py-2 text-sm font-medium focus:ring-1 focus:ring-primary focus:outline-none" readOnly value={value} />
+    <div className="flex flex-col gap-2">
+      <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest px-1">{label}</label>
+      <input 
+        className="bg-surface-container-low border border-outline-variant/20 rounded-xl px-4 py-3 text-sm font-bold text-on-surface-variant outline-none" 
+        readOnly 
+        value={value} 
+      />
     </div>
   );
 }
