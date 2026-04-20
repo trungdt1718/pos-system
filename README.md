@@ -34,7 +34,6 @@ npm install
 VITE_API_URL=http://localhost:3000/api
 DATABASE_URL=chuoi_ket_noi_cua_ban_o_day
 ```
-*Lưu ý: Nếu dùng Neon, hãy nhớ thêm `?sslmode=require` vào cuối URL.*
 
 ---
 
