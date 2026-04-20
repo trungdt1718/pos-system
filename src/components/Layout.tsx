@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
+import { ShoppingCart, Plus } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 
 export default function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -13,6 +15,7 @@ export default function Layout() {
   }
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-surface">
@@ -26,10 +29,34 @@ export default function Layout() {
           title={getPageTitle(location.pathname)} 
           onMenuClick={toggleSidebar}
         />
-        <main className="pt-20 md:pt-24 px-4 md:px-8 pb-8">
+        <main className="pt-20 md:pt-24 px-4 md:px-8 pb-32 md:pb-8">
           <Outlet />
         </main>
       </div>
+
+      {/* Global FAB for Mobile */}
+      <AnimatePresence>
+        {!isPOS && (
+          <motion.button
+            initial={{ scale: 0, opacity: 0, y: 50 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0, opacity: 0, y: 50 }}
+            onClick={() => navigate("/pos")}
+            className="fixed bottom-6 right-6 z-50 lg:hidden flex items-center justify-center w-16 h-16 bg-primary text-white rounded-full shadow-[0_10px_25px_rgba(0,35,111,0.3)] border-4 border-white active:scale-90 transition-all group"
+          >
+            <div className="relative">
+              <ShoppingCart className="w-7 h-7" />
+              <div className="absolute -top-1 -right-1 bg-white rounded-full p-0.5">
+                <Plus className="text-secondary w-3 h-3 font-black" />
+              </div>
+            </div>
+            {/* Tooltip-like label */}
+            <span className="absolute -top-10 right-0 bg-primary-container text-white text-[10px] font-black px-3 py-1.5 rounded-xl whitespace-nowrap shadow-xl uppercase tracking-widest opacity-0 group-active:opacity-100 transition-opacity">
+              Tạo đơn ngay
+            </span>
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (

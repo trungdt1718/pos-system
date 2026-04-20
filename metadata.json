@@ -1,5 +1,5 @@
 {
   "name": "Sumi.Mart - Hệ thống Quản trị Bán lẻ",
   "description": "Hệ thống quản trị bán lẻ cao cấp với các tính năng POS, quản lý kho, khách hàng và nhân sự.",
-  "requestFramePermissions": []
+  "requestFramePermissions": ["camera"]
 }

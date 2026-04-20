@@ -103,49 +103,57 @@ export default function Dashboard() {
         />
       </div>
 
-      <div className="grid grid-cols-12 gap-6">
-        {/* Chart */}
-        <div className="col-span-12 lg:col-span-8 bg-surface-container-lowest rounded-xl p-6 shadow-sm">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-bold text-on-surface">Theo dõi kho (Nhập/Xuất)</h2>
-            <div className="flex gap-2">
-              <button className="text-xs font-bold px-3 py-1.5 bg-surface-container rounded-lg">7 Ngày qua</button>
-              <button className="text-xs font-bold px-3 py-1.5 bg-primary text-white rounded-lg shadow-md">Tháng này</button>
-            </div>
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: "#757682" }} />
-                <YAxis hide />
-                <Tooltip />
-                <Bar dataKey="sub" fill="#1e3a8a20" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="value" fill="#00236f" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
+      <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6">
         {/* Quick Actions */}
-        <div className="col-span-12 lg:col-span-4 bg-primary-container rounded-xl p-6 shadow-lg text-white relative overflow-hidden">
+        <div className="order-1 lg:order-2 col-span-12 lg:col-span-4 bg-primary-container rounded-3xl p-6 shadow-xl text-white relative overflow-hidden">
           <div className="relative z-10">
-            <h2 className="text-lg font-bold mb-4">Thao tác nhanh</h2>
+            <h2 className="text-lg font-black uppercase tracking-tight mb-4">Thao tác nhanh</h2>
             <div className="grid grid-cols-2 gap-3">
-              <QuickActionButton icon={ShoppingCart} label="Tạo Đơn" onClick={() => handleQuickAction("Tạo Đơn")} />
+              <QuickActionButton icon={ShoppingCart} label="Tạo Đơn" onClick={() => handleQuickAction("Tạo Đơn")} primary />
               <QuickActionButton icon={Package} label="Nhập Kho" onClick={() => handleQuickAction("Nhập Kho")} />
               <QuickActionButton icon={BarChart3} label="Báo cáo" onClick={() => handleQuickAction("Báo cáo")} />
               <QuickActionButton icon={Settings} label="Chỉnh giá" onClick={() => handleQuickAction("Chỉnh giá")} />
             </div>
-            <div className="mt-6 p-4 bg-white/5 rounded-xl border border-white/10">
-              <p className="text-[10px] uppercase font-bold text-white/60 tracking-wider mb-2">Thông báo mới nhất</p>
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="text-tertiary-container w-5 h-5" />
-                <p className="text-xs leading-relaxed">Sản phẩm <span className="font-bold">"Sữa đặc ABC"</span> sắp hết hàng (Còn 5 sp).</p>
+            <div className="mt-6 p-4 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm">
+              <p className="text-[10px] uppercase font-black text-white/40 tracking-[0.2em] mb-2">Thông báo mới nhất</p>
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-tertiary-container/20 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="text-tertiary-container w-4 h-4" />
+                </div>
+                <p className="text-xs leading-relaxed font-bold">Sản phẩm <span className="text-tertiary-container">"Sữa đặc ABC"</span> sắp hết hàng (Còn 5 sp).</p>
               </div>
             </div>
           </div>
           <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+          <div className="absolute -top-10 -left-10 w-20 h-20 bg-primary-container/50 rounded-full blur-2xl"></div>
+        </div>
+
+        {/* Chart */}
+        <div className="order-2 lg:order-1 col-span-12 lg:col-span-8 bg-surface-container-lowest rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-outline-variant/10">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div>
+              <h2 className="text-lg font-black text-on-surface uppercase tracking-tight">Theo dõi kho (Nhập/Xuất)</h2>
+              <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">Dữ liệu cập nhật thời gian thực</p>
+            </div>
+            <div className="flex gap-1 bg-surface-container-low p-1 rounded-xl">
+              <button className="text-[10px] font-black px-3 py-1.5 bg-white text-primary rounded-lg shadow-sm">Tháng này</button>
+            </div>
+          </div>
+          <div className="h-64 sm:h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 800, fill: "#adb5bd" }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 800, fill: "#adb5bd" }} />
+                <Tooltip 
+                  cursor={{ fill: 'transparent' }}
+                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 800 }}
+                />
+                <Bar dataKey="sub" fill="#1e3a8a08" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="value" fill="#00236f" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         {/* Recent Orders */}
@@ -226,14 +234,17 @@ function KPICard({ title, value, trend, icon: Icon, color, trendColor = "green",
   );
 }
 
-function QuickActionButton({ icon: Icon, label, onClick }: any) {
+function QuickActionButton({ icon: Icon, label, onClick, primary }: any) {
   return (
     <button 
       onClick={onClick}
-      className="flex flex-col items-center justify-center p-4 bg-white/10 backdrop-blur-md rounded-xl hover:bg-white/20 transition-all group w-full"
+      className={cn(
+        "flex flex-col items-center justify-center p-4 backdrop-blur-md rounded-2xl hover:brightness-110 transition-all group w-full",
+        primary ? "bg-white text-primary" : "bg-white/10 text-white"
+      )}
     >
-      <Icon className="mb-2 w-6 h-6 group-hover:scale-110 transition-transform" />
-      <span className="text-xs font-bold uppercase tracking-widest">{label}</span>
+      <Icon className={cn("mb-2 w-6 h-6 group-hover:scale-110 transition-transform", primary ? "text-primary" : "text-white")} />
+      <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
     </button>
   );
 }
