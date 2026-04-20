@@ -100,66 +100,71 @@ export default function Customers() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-112px)] gap-6">
+    <div className="flex flex-col lg:flex-row h-auto lg:h-[calc(100vh-112px)] gap-6">
       <section className="flex-[1.5] bg-surface-container-lowest rounded-xl flex flex-col overflow-hidden shadow-sm">
-        <div className="p-6 flex justify-between items-end border-b border-surface-container-low">
+        <div className="p-4 md:p-6 flex justify-between items-end border-b border-surface-container-low">
           <div>
-            <h2 className="text-2xl font-black tracking-tight text-primary">Danh mục khách hàng</h2>
-            <p className="text-xs text-slate-500 font-medium">Hiển thị {customers.length} khách hàng trong hệ thống</p>
+            <h2 className="text-xl md:text-2xl font-black tracking-tight text-primary">Khách hàng</h2>
+            <p className="text-[10px] md:text-xs text-slate-500 font-medium">Hiển thị {customers.length} khách hàng</p>
           </div>
           <div className="flex gap-2">
             <button className="p-2 bg-surface-container-low rounded-lg hover:bg-surface-container-high transition-all">
-              <Filter className="text-primary w-5 h-5" />
+              <Filter className="text-primary w-4 h-4 md:w-5 md:h-5" />
             </button>
             <button className="p-2 bg-surface-container-low rounded-lg hover:bg-surface-container-high transition-all">
-              <Download className="text-primary w-5 h-5" />
+              <Download className="text-primary w-4 h-4 md:w-5 md:h-5" />
             </button>
           </div>
         </div>
         <div className="flex-1 overflow-auto custom-scrollbar">
-          <table className="w-full text-left border-collapse">
-            <thead className="sticky top-0 bg-white z-10">
-              <tr className="bg-surface-container-low">
-                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Mã KH</th>
-                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Họ tên</th>
-                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Giới tính</th>
-                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Ngày sinh</th>
-                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant text-right">Tổng tiền</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-surface-container-low">
-              {customers.map((customer) => (
-                <tr 
-                  key={customer.id}
-                  onClick={() => {
-                    setSelectedCustomer(customer);
-                    setIsAdding(false);
-                  }}
-                  className={cn(
-                    "hover:bg-surface-container-low/50 transition-colors cursor-pointer group",
-                    selectedCustomer?.id === customer.id && !isAdding && "bg-primary/5 border-l-4 border-primary"
-                  )}
-                >
-                  <td className="px-6 py-4 text-sm font-mono text-primary-container font-bold">{customer.id}</td>
-                  <td className="px-6 py-4 text-sm font-semibold text-on-background">{customer.name}</td>
-                  <td className="px-6 py-4">
-                    <span className={cn(
-                      "px-2 py-1 text-[10px] font-bold rounded uppercase",
-                      customer.gender === "Nam" ? "bg-secondary-container text-on-secondary-container" : "bg-tertiary-fixed text-on-tertiary-fixed"
-                    )}>
-                      {customer.gender}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-600">{customer.birthday}</td>
-                  <td className="px-6 py-4 text-sm font-bold text-primary text-right">{formatCurrency(customer.totalSpent)}</td>
+          <div className="min-w-[700px] lg:min-w-0">
+            <table className="w-full text-left border-collapse">
+              <thead className="sticky top-0 bg-white z-10">
+                <tr className="bg-surface-container-low">
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Mã KH</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Họ tên</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Giới tính</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Ngày sinh</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant text-right">Tổng tiền</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-surface-container-low">
+                {customers.map((customer) => (
+                  <tr 
+                    key={customer.id}
+                    onClick={() => {
+                      setSelectedCustomer(customer);
+                      setIsAdding(false);
+                      if (window.innerWidth < 1024) {
+                        document.getElementById('customer-detail')?.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
+                    className={cn(
+                      "hover:bg-surface-container-low/50 transition-colors cursor-pointer group",
+                      selectedCustomer?.id === customer.id && !isAdding && "bg-primary/5 border-l-4 border-primary"
+                    )}
+                  >
+                    <td className="px-6 py-4 text-sm font-mono text-primary-container font-bold">{customer.id}</td>
+                    <td className="px-6 py-4 text-sm font-semibold text-on-background">{customer.name}</td>
+                    <td className="px-6 py-4">
+                      <span className={cn(
+                        "px-2 py-1 text-[10px] font-bold rounded uppercase",
+                        customer.gender === "Nam" ? "bg-secondary-container text-on-secondary-container" : "bg-tertiary-fixed text-on-tertiary-fixed"
+                      )}>
+                        {customer.gender}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{customer.birthday}</td>
+                    <td className="px-6 py-4 text-sm font-bold text-primary text-right">{formatCurrency(customer.totalSpent)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
-      <section className="flex-1 bg-surface-container-lowest rounded-xl flex flex-col shadow-sm overflow-hidden border-l-4 border-primary">
+      <section id="customer-detail" className="flex-1 bg-surface-container-lowest rounded-xl flex flex-col shadow-sm overflow-hidden border-l-4 border-primary">
         <div className="p-6 bg-surface-container-low">
           <h2 className="text-xl font-bold tracking-tight text-primary-container">
             {isAdding ? "Thêm khách hàng mới" : "Thông tin khách hàng"}
@@ -168,9 +173,9 @@ export default function Customers() {
             {isAdding ? "Nhập thông tin khách hàng mới" : "Chi tiết hồ sơ khách hàng"}
           </p>
         </div>
-        <div className="flex-1 p-8 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 p-4 md:p-8 overflow-y-auto custom-scrollbar">
           {isAdding ? (
-            <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-4 md:gap-y-6">
               <div className="col-span-2">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Họ tên</label>
                 <input 
@@ -228,7 +233,7 @@ export default function Customers() {
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Địa chỉ</label>
                 <textarea 
                   className="w-full bg-surface-container-lowest border border-outline-variant/10 rounded-lg py-2 px-3 text-sm focus:ring-2 focus:ring-primary/20 border-none resize-none" 
-                  rows={3} 
+                  rows={2} 
                   placeholder="Nhập địa chỉ..."
                   value={formData.address}
                   onChange={(e) => setFormData({...formData, address: e.target.value})}
@@ -237,9 +242,9 @@ export default function Customers() {
             </div>
           ) : selectedCustomer ? (
             <>
-              <div className="flex justify-center mb-8">
+              <div className="flex justify-center mb-6 md:mb-8">
                 <div className="relative group">
-                  <div className="w-32 h-32 rounded-2xl overflow-hidden bg-surface-container-high flex items-center justify-center border border-outline-variant/10">
+                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl overflow-hidden bg-surface-container-high flex items-center justify-center border border-outline-variant/10">
                     <img 
                       src={`https://picsum.photos/seed/${selectedCustomer.id}/200/200`} 
                       alt={selectedCustomer.name} 
@@ -256,10 +261,10 @@ export default function Customers() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-4 md:gap-y-6">
                 <div className="col-span-1">
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Mã KH</label>
-                  <input className="w-full bg-surface-container-low border-none rounded-lg py-2 px-3 text-sm font-mono text-primary font-bold focus:ring-0" readOnly value={selectedCustomer.id} />
+                  <input className="w-full bg-surface-container-low border-none rounded-lg py-2 px-3 text-xs md:text-sm font-mono text-primary font-bold focus:ring-0" readOnly value={selectedCustomer.id} />
                 </div>
                 <div className="col-span-1">
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Giới tính</label>
@@ -311,24 +316,24 @@ export default function Customers() {
                     />
                   </div>
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-2 md:col-span-2">
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Địa chỉ</label>
                   <textarea 
                     className="w-full bg-surface-container-lowest border border-outline-variant/10 rounded-lg py-2 px-3 text-sm focus:ring-2 focus:ring-primary/20 border-none resize-none" 
-                    rows={3} 
+                    rows={2} 
                     value={selectedCustomer.address}
                     onChange={(e) => setSelectedCustomer({...selectedCustomer, address: e.target.value})}
                   />
                 </div>
               </div>
 
-              <div className="mt-8 p-4 bg-primary rounded-xl flex justify-between items-center text-white">
+              <div className="mt-6 md:mt-8 p-4 bg-primary rounded-xl flex justify-between items-center text-white">
                 <div>
-                  <p className="text-[10px] uppercase font-bold tracking-widest opacity-80">Tổng tiền tích lũy</p>
-                  <p className="text-2xl font-black tracking-tight">{formatCurrency(selectedCustomer.totalSpent)}</p>
+                  <p className="text-[10px] uppercase font-bold tracking-widest opacity-80">Tổng tích lũy</p>
+                  <p className="text-lg md:text-2xl font-black tracking-tight">{formatCurrency(selectedCustomer.totalSpent)}</p>
                 </div>
-                <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6" />
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-white/10 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 md:w-6 md:h-6" />
                 </div>
               </div>
             </>

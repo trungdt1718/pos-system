@@ -10,7 +10,8 @@ import {
   Settings, 
   LogOut,
   Store,
-  TrendingUp
+  TrendingUp,
+  X
 } from "lucide-react";
 import { cn } from "../lib/utils";
 
@@ -28,7 +29,12 @@ const navItems = [
   { icon: Settings, label: "Thiết lập", path: "/settings" },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [settings, setSettings] = React.useState<any>(null);
 
   React.useEffect(() => {
@@ -36,22 +42,36 @@ export default function Sidebar() {
   }, []);
 
   return (
-    <aside className="h-screen w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant/10 flex flex-col py-6 z-50">
-      <div className="px-6 mb-8 flex items-center gap-3">
-        <div className="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center">
-          <Store className="text-white w-6 h-6" />
+    <aside className={cn(
+      "h-screen w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant/10 flex flex-col py-6 z-50 transition-transform duration-300",
+      isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+    )}>
+      <div className="px-6 mb-8 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center">
+            <Store className="text-white w-6 h-6" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-lg md:text-xl font-black text-primary-container tracking-tighter truncate max-w-[120px]">{settings?.tendv || "Sumi.Mart"}</span>
+            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant opacity-70">Hệ thống quản trị</span>
+          </div>
         </div>
-        <div className="flex flex-col">
-          <span className="text-xl font-black text-primary-container tracking-tighter">{settings?.tendv || "Sumi.Mart"}</span>
-          <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant opacity-70">Hệ thống quản trị</span>
-        </div>
+        <button 
+          onClick={onClose}
+          className="lg:hidden p-2 hover:bg-surface-container-highest rounded-lg text-on-surface-variant"
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
-      <nav className="flex-1 space-y-1 px-2">
+      <nav className="flex-1 space-y-1 px-2 overflow-y-auto">
         {navItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
+            onClick={() => {
+              if (window.innerWidth < 1024) onClose();
+            }}
             className={({ isActive }) => cn(
               "flex items-center px-4 py-3 rounded-lg transition-all duration-200 group",
               isActive 
@@ -74,12 +94,12 @@ export default function Sidebar() {
           />
           <div className="overflow-hidden">
             <p className="text-xs font-bold text-on-surface truncate">Admin Sumi</p>
-            <p className="text-[10px] text-on-surface-variant truncate">Quản trị hệ thống</p>
+            <p className="text-[10px] text-on-surface-variant truncate">Quản trị</p>
           </div>
         </div>
         <button className="w-full flex items-center gap-3 px-4 py-3 mt-2 text-error hover:bg-error/10 rounded-lg transition-colors">
           <LogOut className="w-4 h-4" />
-          <span className="text-xs font-bold uppercase tracking-wider">Đăng xuất</span>
+          <span className="text-xs font-bold uppercase tracking-wider">Thoát</span>
         </button>
       </div>
     </aside>
