@@ -65,10 +65,18 @@ export default function Settings() {
       alert("Vui lòng nhập URL API!");
       return;
     }
+
+    // Kiểm tra lỗi Mixed Content
+    if (window.location.protocol === "https:" && apiUrl.startsWith("http://")) {
+      if (!confirm("CẢNH BÁO: Trang web đang chạy HTTPS nhưng bạn nhập API là HTTP. Trình duyệt sẽ chặn yêu cầu này (Lỗi Mixed Content). Bạn có chắc chắn muốn lưu không?")) {
+        return;
+      }
+    }
+
     localStorage.setItem("sumi_mart_api_url", apiUrl);
     updateApiBaseURL(apiUrl);
     alert("Cập nhật URL API thành công! Hệ thống sẽ sử dụng URL này cho các yêu cầu tiếp theo.");
-    checkDbStatus(); // Thử kiểm tra lại status qua API mới
+    checkDbStatus();
   };
 
   const resetApiUrl = () => {

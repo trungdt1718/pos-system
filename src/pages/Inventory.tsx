@@ -31,7 +31,7 @@ export default function Inventory() {
     setLoading(true);
     productService.getAll().then(res => {
       setInventory(res.data);
-      if (res.data.length > 0) {
+      if (res.data.length > 0 && !selectedItem) {
         setSelectedItem(res.data[0]);
       }
       setLoading(false);
@@ -53,30 +53,30 @@ export default function Inventory() {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <div className="px-8 py-6 flex justify-between items-end">
+    <div className="flex flex-col h-auto lg:h-[calc(100vh-112px)] overflow-hidden">
+      <div className="px-4 md:px-8 py-4 md:py-6 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
           <nav className="flex text-[10px] font-bold tracking-widest text-on-surface-variant uppercase mb-2">
             <span>Hệ thống</span>
             <span className="mx-2">/</span>
             <span className="text-primary">Quản lý kho hàng</span>
           </nav>
-          <h1 className="text-3xl font-black text-primary-container tracking-tight">Kho hàng</h1>
+          <h1 className="text-2xl md:text-3xl font-black text-primary-container tracking-tight">Kho hàng</h1>
         </div>
-        <div className="flex gap-3">
-          <button className="bg-surface-container-highest text-on-surface flex items-center gap-2 px-4 py-2 rounded-md font-bold text-sm transition-all active:scale-95">
+        <div className="flex gap-2 w-full sm:w-auto">
+          <button className="flex-1 sm:flex-none justify-center bg-surface-container-highest text-on-surface flex items-center gap-2 px-4 py-2 rounded-md font-bold text-xs transition-all active:scale-95">
             <ArrowRightLeft className="w-4 h-4" /> Kiểm kho
           </button>
-          <button className="bg-gradient-to-br from-primary to-primary-container text-white flex items-center gap-2 px-6 py-2 rounded-md font-bold text-sm transition-all active:scale-95 shadow-md">
+          <button className="flex-1 sm:flex-none justify-center bg-gradient-to-br from-primary to-primary-container text-white flex items-center gap-2 px-6 py-2 rounded-md font-bold text-xs transition-all active:scale-95 shadow-md">
             <PlusCircle className="w-4 h-4" /> Nhập hàng
           </button>
         </div>
       </div>
 
-      <div className="flex-1 flex px-8 pb-8 gap-6 overflow-hidden">
-        <div className="w-2/3 flex flex-col bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden border border-outline-variant/10">
-          <div className="p-4 bg-surface flex justify-between items-center border-b border-outline-variant/10">
-            <div className="relative w-full max-w-xs">
+      <div className="flex-1 flex flex-col lg:flex-row px-4 md:px-8 pb-8 gap-6 overflow-hidden">
+        <div className="flex-[1.2] flex flex-col bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden border border-outline-variant/10">
+          <div className="p-4 bg-surface flex flex-col sm:flex-row justify-between items-center border-b border-outline-variant/10 gap-3">
+            <div className="relative w-full sm:max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant w-4 h-4" />
               <input 
                 className="w-full bg-surface-container-low border border-outline-variant/20 focus:border-primary/50 focus:ring-0 rounded-lg pl-10 pr-4 py-2 text-sm" 
@@ -99,109 +99,114 @@ export default function Inventory() {
           </div>
           
           <div className="flex-1 overflow-auto custom-scrollbar">
-            <table className="w-full text-left border-collapse">
-              <thead className="sticky top-0 bg-surface-container-low/95 backdrop-blur-md z-10">
-                <tr>
-                  <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Mặt hàng</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest text-center">Số lô</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest text-center">Hạn dùng</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest text-center">Tồn kho</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest text-center">ĐVT</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Tình trạng</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-outline-variant/10">
-                {loading ? (
+            <div className="min-w-[650px] lg:min-w-0">
+              <table className="w-full text-left border-collapse">
+                <thead className="sticky top-0 bg-surface-container-low/95 backdrop-blur-md z-10">
                   <tr>
-                    <td colSpan={6} className="px-6 py-20 text-center text-on-surface-variant italic">Đang tải dữ liệu...</td>
+                    <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Mặt hàng</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest text-center">Số lô</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest text-center">Hạn dùng</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest text-right">Tồn kho</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Tình trạng</th>
                   </tr>
-                ) : filteredInventory.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-20 text-center text-on-surface-variant italic">Không tìm thấy mặt hàng nào.</td>
-                  </tr>
-                ) : filteredInventory.map((item) => {
-                  const status = getStatus(item);
-                  return (
-                    <tr 
-                      key={item.id}
-                      onClick={() => setSelectedItem(item)}
-                      className={cn(
-                        "hover:bg-surface-container-highest/50 cursor-pointer transition-colors group",
-                        selectedItem?.id === item.id && "bg-primary/5 border-l-4 border-primary"
-                      )}
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-bold text-primary-container">{item.name}</span>
-                          <span className="text-[10px] text-on-surface-variant font-mono uppercase">{item.id} • {item.category}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-center text-xs font-mono text-on-surface-variant">{item.batch || "---"}</td>
-                      <td className="px-6 py-4 text-center text-xs text-on-surface-variant">{item.expiry || "---"}</td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={cn(
-                          "text-sm font-black",
-                          status === "Sắp hết hàng" || status === "Hết hàng" ? "text-error" : "text-primary"
-                        )}>
-                          {item.stock}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-on-surface-variant text-center">{item.unit}</td>
-                      <td className="px-6 py-4">
-                        <span className={cn(
-                          "px-3 py-1 text-[10px] font-bold uppercase rounded-full",
-                          status === "Bình thường" ? "bg-secondary-container text-on-secondary-container" : 
-                          status === "Sắp hết hàng" ? "bg-error-container text-on-error-container" :
-                          "bg-tertiary-container text-on-tertiary-container"
-                        )}>
-                          {status}
-                        </span>
-                      </td>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/10">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-20 text-center text-on-surface-variant italic text-xs">Đang tải dữ liệu...</td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  ) : filteredInventory.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-20 text-center text-on-surface-variant italic text-xs">Không tìm thấy mặt hàng nào.</td>
+                    </tr>
+                  ) : filteredInventory.map((item) => {
+                    const status = getStatus(item);
+                    return (
+                      <tr 
+                        key={item.id}
+                        onClick={() => {
+                          setSelectedItem(item);
+                          if (window.innerWidth < 1024) {
+                            document.getElementById('inventory-detail')?.scrollIntoView({ behavior: 'smooth' });
+                          }
+                        }}
+                        className={cn(
+                          "hover:bg-surface-container-highest/50 cursor-pointer transition-colors group",
+                          selectedItem?.id === item.id && "bg-primary/5 border-l-4 border-primary"
+                        )}
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col">
+                            <span className="text-sm font-bold text-primary-container">{item.name}</span>
+                            <span className="text-[10px] text-on-surface-variant font-mono uppercase">{item.id} • {item.unit}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-center text-xs font-mono text-on-surface-variant">{item.batch || "---"}</td>
+                        <td className="px-6 py-4 text-center text-xs text-on-surface-variant">{item.expiry || "---"}</td>
+                        <td className="px-6 py-4 text-right">
+                          <span className={cn(
+                            "text-sm font-black",
+                            status === "Sắp hết hàng" || status === "Hết hàng" ? "text-error" : "text-primary"
+                          )}>
+                            {item.stock}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={cn(
+                            "px-3 py-1 text-[10px] font-bold uppercase rounded-full",
+                            status === "Bình thường" ? "bg-secondary-container text-on-secondary-container" : 
+                            status === "Sắp hết hàng" ? "bg-error-container text-on-error-container" :
+                            "bg-tertiary-container text-on-tertiary-container"
+                          )}>
+                            {status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
-        <div className="w-1/3 flex flex-col gap-6 overflow-hidden">
+        <div id="inventory-detail" className="flex-[0.8] flex flex-col gap-6 overflow-hidden">
           {selectedItem ? (
             <>
-              <div className="bg-surface-container-lowest rounded-xl shadow-lg border border-primary-container/5 overflow-hidden flex flex-col">
+              <div className="bg-surface-container-lowest rounded-xl shadow-lg border border-primary-container/5 overflow-hidden flex flex-col shrink-0">
                 <div className="bg-primary-container px-6 py-4 flex items-center justify-between">
                   <h3 className="text-white font-bold tracking-tight">Chi tiết tồn kho</h3>
                   <Warehouse className="text-white w-5 h-5" />
                 </div>
-                <div className="p-6 space-y-6">
+                <div className="p-4 md:p-6 space-y-6">
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 bg-surface-container-high rounded-2xl flex items-center justify-center border border-outline-variant/10">
                       <Package className="text-primary w-8 h-8" />
                     </div>
                     <div>
-                      <h4 className="text-lg font-black text-primary-container leading-tight">{selectedItem.name}</h4>
-                      <p className="text-xs text-on-surface-variant font-mono uppercase">{selectedItem.id}</p>
+                      <h4 className="text-base md:text-lg font-black text-primary-container leading-tight">{selectedItem.name}</h4>
+                      <p className="text-[10px] text-on-surface-variant font-mono uppercase">{selectedItem.id}</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-surface-container rounded-xl border border-outline-variant/5">
+                    <div className="p-3 md:p-4 bg-surface-container rounded-xl border border-outline-variant/5">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Số lô hàng</p>
-                      <p className="text-sm font-black text-primary-container font-mono">{selectedItem.batch || "---"}</p>
+                      <p className="text-xs md:text-sm font-black text-primary-container font-mono">{selectedItem.batch || "---"}</p>
                     </div>
-                    <div className="p-4 bg-surface-container rounded-xl border border-outline-variant/5">
+                    <div className="p-3 md:p-4 bg-surface-container rounded-xl border border-outline-variant/5">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Hạn sử dụng</p>
                       <div className="flex items-center gap-2">
                         <Calendar className="w-3 h-3 text-on-surface-variant" />
-                        <p className="text-sm font-black text-primary-container">{selectedItem.expiry || "---"}</p>
+                        <p className="text-xs md:text-sm font-black text-primary-container">{selectedItem.expiry || "---"}</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <div className="flex justify-between items-end">
-                      <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Mức tồn kho hiện tại</span>
-                      <span className="text-2xl font-black text-primary tracking-tighter">{selectedItem.stock} <span className="text-xs font-bold uppercase">{selectedItem.unit}</span></span>
+                      <span className="text-[10px] md:text-xs font-bold text-on-surface-variant uppercase tracking-wider">Mức tồn kho hiện tại</span>
+                      <span className="text-xl md:text-2xl font-black text-primary tracking-tighter">{selectedItem.stock} <span className="text-[10px] md:text-xs font-bold uppercase">{selectedItem.unit}</span></span>
                     </div>
                     <div className="h-2 bg-surface-container-highest rounded-full overflow-hidden">
                       <div 
@@ -212,17 +217,13 @@ export default function Inventory() {
                         style={{ width: `${Math.min((selectedItem.stock / 100) * 100, 100)}%` }}
                       ></div>
                     </div>
-                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
-                      <span>Mức tối thiểu: 20</span>
-                      <span>An toàn: 50</span>
-                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="flex-1 bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden flex flex-col">
+              <div className="flex-1 bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden flex flex-col min-h-[300px]">
                 <div className="px-6 py-4 border-b border-outline-variant/10 flex items-center justify-between bg-surface-container-low/30">
-                  <h3 className="text-xs font-black text-primary-container uppercase tracking-widest flex items-center gap-2">
+                  <h3 className="text-[10px] md:text-xs font-black text-primary-container uppercase tracking-widest flex items-center gap-2">
                     <History className="w-4 h-4" />
                     Lịch sử xuất nhập
                   </h3>
@@ -238,11 +239,11 @@ export default function Inventory() {
                         {i === 1 ? <RefreshCcw className="w-4 h-4" /> : <ArrowRightLeft className="w-4 h-4" />}
                       </div>
                       <div className="flex-1">
-                        <p className="text-xs font-bold text-on-surface">{i === 1 ? "Nhập kho bổ sung" : "Xuất kho bán hàng"}</p>
+                        <p className="text-[10px] md:text-xs font-bold text-on-surface">{i === 1 ? "Nhập kho bổ sung" : "Xuất kho bán hàng"}</p>
                         <p className="text-[10px] text-on-surface-variant">02/04/2026 • HD-99283</p>
                       </div>
                       <div className="text-right">
-                        <p className={cn("text-xs font-black", i === 1 ? "text-primary" : "text-error")}>
+                        <p className={cn("text-[10px] md:text-xs font-black", i === 1 ? "text-primary" : "text-error")}>
                           {i === 1 ? "+20" : "-5"}
                         </p>
                       </div>
@@ -252,7 +253,7 @@ export default function Inventory() {
               </div>
             </>
           ) : (
-            <div className="h-full flex items-center justify-center text-on-surface-variant italic text-sm bg-surface-container-lowest rounded-xl border border-outline-variant/10">
+            <div className="h-40 lg:h-full flex items-center justify-center text-on-surface-variant italic text-sm bg-surface-container-lowest rounded-xl border border-outline-variant/10">
               Chọn mặt hàng để xem chi tiết
             </div>
           )}

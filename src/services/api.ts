@@ -2,8 +2,15 @@ import axios from "axios";
 import { Product, Customer, Staff, Invoice } from "../types";
 
 const getBaseURL = () => {
-  const customUrl = localStorage.getItem("sumi_mart_api_url");
-  return customUrl || import.meta.env.VITE_API_URL || "/api";
+  let url = localStorage.getItem("sumi_mart_api_url") || import.meta.env.VITE_API_URL || "/api";
+  
+  // Tự động sửa lỗi Mixed Content: Nếu trang web là HTTPS mà API là HTTP
+  if (window.location.protocol === "https:" && url.startsWith("http://")) {
+    console.warn("Tự động chuyển đổi API từ HTTP sang HTTPS để tránh lỗi Mixed Content.");
+    url = url.replace("http://", "https://");
+  }
+  
+  return url;
 };
 
 const api = axios.create({

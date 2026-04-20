@@ -80,7 +80,7 @@ export default function Orders() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
               <tr className="bg-surface-container-low">
                 <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Mã đơn</th>

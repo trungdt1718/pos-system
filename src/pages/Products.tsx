@@ -102,72 +102,84 @@ export default function Products() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-112px)] gap-6">
+    <div className="flex flex-col lg:flex-row h-auto lg:h-[calc(100vh-112px)] gap-6">
       {/* Left Pane: Product List */}
-      <section className="flex-[1.2] flex flex-col bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-surface-container flex items-center justify-between">
+      <section className="flex-[1.2] flex flex-col bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden border border-outline-variant/5">
+        <div className="p-4 md:p-5 border-b border-surface-container flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-lg font-bold tracking-tight text-primary-container">Danh sách hàng hóa</h2>
-            <p className="text-xs text-on-surface-variant">Tổng cộng: {products.length} mặt hàng</p>
+            <h2 className="text-base md:text-lg font-bold tracking-tight text-primary-container">Danh sách hàng hóa</h2>
+            <p className="text-[10px] md:text-xs text-on-surface-variant">Tổng cộng: {products.length} mặt hàng</p>
           </div>
-          <div className="flex gap-2">
-            <button className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-on-secondary-container bg-secondary-container rounded-lg hover:brightness-95 transition-all">
+          <div className="flex gap-2 w-full sm:w-auto">
+            <button className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-1.5 text-[10px] md:text-xs font-bold text-on-secondary-container bg-secondary-container rounded-lg hover:brightness-95 transition-all">
               <Filter className="w-3 h-3" /> Lọc
             </button>
-            <button className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-on-secondary-container bg-secondary-container rounded-lg hover:brightness-95 transition-all">
+            <button className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-1.5 text-[10px] md:text-xs font-bold text-on-secondary-container bg-secondary-container rounded-lg hover:brightness-95 transition-all">
               <Download className="w-3 h-3" /> Xuất Excel
+            </button>
+            <button 
+              onClick={startAdding}
+              className="lg:hidden flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-[10px] md:text-xs font-bold text-white bg-primary rounded-lg"
+            >
+              <PlusCircle className="w-3 h-3" /> Thêm
             </button>
           </div>
         </div>
         <div className="flex-1 overflow-auto custom-scrollbar">
-          <table className="w-full text-left border-collapse">
-            <thead className="sticky top-0 bg-surface-container-low z-10">
-              <tr>
-                <th className="px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Mã số</th>
-                <th className="px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tên hàng hóa</th>
-                <th className="px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Đơn vị tính</th>
-                <th className="px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Phân loại</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-surface-container">
-              {products.map((product) => (
-                <tr 
-                  key={product.id}
-                  onClick={() => {
-                    setSelectedProduct(product);
-                    setIsAdding(false);
-                  }}
-                  className={cn(
-                    "hover:bg-surface-container-low transition-colors cursor-pointer",
-                    selectedProduct?.id === product.id && !isAdding && "bg-primary-fixed/30 border-l-4 border-primary"
-                  )}
-                >
-                  <td className="px-5 py-4 text-sm font-semibold text-primary">{product.id}</td>
-                  <td className="px-5 py-4 text-sm font-medium">{product.name}</td>
-                  <td className="px-5 py-4 text-sm text-on-surface-variant">{product.unit}</td>
-                  <td className="px-5 py-4">
-                    <span className="px-2 py-1 text-[10px] font-bold bg-secondary-container text-on-secondary-container rounded-full uppercase">
-                      {product.category}
-                    </span>
-                  </td>
+          <div className="min-w-[600px] lg:min-w-0">
+            <table className="w-full text-left border-collapse">
+              <thead className="sticky top-0 bg-surface-container-low z-10">
+                <tr>
+                  <th className="px-4 md:px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Mã số</th>
+                  <th className="px-4 md:px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tên hàng hóa</th>
+                  <th className="px-4 md:px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Đơn vị</th>
+                  <th className="px-4 md:px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Phân loại</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-surface-container">
+                {products.map((product) => (
+                  <tr 
+                    key={product.id}
+                    onClick={() => {
+                      setSelectedProduct(product);
+                      setIsAdding(false);
+                      // Scroll to detail on mobile
+                      if (window.innerWidth < 1024) {
+                        document.getElementById('detail-pane')?.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
+                    className={cn(
+                      "hover:bg-surface-container-low transition-colors cursor-pointer",
+                      selectedProduct?.id === product.id && !isAdding && "bg-primary-fixed/30 border-l-4 border-primary"
+                    )}
+                  >
+                    <td className="px-4 md:px-5 py-4 text-sm font-semibold text-primary">{product.id}</td>
+                    <td className="px-4 md:px-5 py-4 text-sm font-medium">{product.name}</td>
+                    <td className="px-4 md:px-5 py-4 text-sm text-on-surface-variant">{product.unit}</td>
+                    <td className="px-4 md:px-5 py-4">
+                      <span className="px-2 py-1 text-[10px] font-bold bg-secondary-container text-on-secondary-container rounded-full uppercase">
+                        {product.category}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
       {/* Right Pane: Product Detail Form */}
-      <section className="flex-[0.8] flex flex-col bg-surface-container-lowest rounded-xl shadow-sm">
-        <div className="p-5 border-b border-surface-container flex items-center gap-3">
+      <section id="detail-pane" className="flex-[0.8] flex flex-col bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/5">
+        <div className="p-4 md:p-5 border-b border-surface-container flex items-center gap-3">
           <Edit3 className="text-primary-container w-5 h-5" />
-          <h2 className="text-lg font-bold tracking-tight text-primary-container">
+          <h2 className="text-base md:text-lg font-bold tracking-tight text-primary-container">
             {isAdding ? "Thêm hàng hóa mới" : "Thông tin hàng hóa"}
           </h2>
         </div>
-        <div className="flex-1 overflow-auto p-6 space-y-6 custom-scrollbar">
+        <div className="flex-1 overflow-auto p-4 md:p-6 space-y-6 custom-scrollbar">
           {isAdding ? (
-            <div className="grid grid-cols-12 gap-5">
+            <div className="grid grid-cols-12 gap-4 md:gap-5">
               <div className="col-span-12">
                 <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Tên hàng hóa</label>
                 <input 
@@ -240,6 +252,89 @@ export default function Products() {
                   className="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-lg px-3 py-2 text-sm focus:border-primary-container" 
                   value={formData.supplier}
                   onChange={(e) => setFormData({...formData, supplier: e.target.value})}
+                />
+              </div>
+            </div>
+          ) : selectedProduct ? (
+            <div className="grid grid-cols-12 gap-4 md:gap-5">
+              <div className="col-span-4">
+                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Mã HH</label>
+                <input 
+                  className="w-full bg-surface-container-low border border-outline-variant/15 rounded-lg px-3 py-2 text-sm font-bold text-primary-container focus:ring-0" 
+                  readOnly 
+                  value={selectedProduct.id} 
+                />
+              </div>
+              <div className="col-span-8">
+                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Tên hàng hóa</label>
+                <input 
+                  className="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-lg px-3 py-2 text-sm focus:border-primary-container focus:ring-2 focus:ring-primary-container/10 transition-all" 
+                  value={selectedProduct.name}
+                  onChange={(e) => setSelectedProduct({...selectedProduct, name: e.target.value})}
+                />
+              </div>
+              <div className="col-span-6">
+                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Đơn vị tính</label>
+                <select 
+                  className="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-lg px-3 py-2 text-sm focus:border-primary-container focus:ring-2 focus:ring-primary-container/10"
+                  value={selectedProduct.unit}
+                  onChange={(e) => setSelectedProduct({...selectedProduct, unit: e.target.value})}
+                >
+                  <option>Hộp</option>
+                  <option>Cái</option>
+                  <option>Chai</option>
+                  <option>Gói</option>
+                  <option>Túi</option>
+                </select>
+              </div>
+              <div className="col-span-6">
+                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Phân loại</label>
+                <input 
+                  className="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-lg px-3 py-2 text-sm focus:border-primary-container" 
+                  value={selectedProduct.category}
+                  onChange={(e) => setSelectedProduct({...selectedProduct, category: e.target.value})}
+                />
+              </div>
+              <div className="col-span-6">
+                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Giá bán</label>
+                <input 
+                  type="number"
+                  className="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-lg px-3 py-2 text-sm focus:border-primary-container" 
+                  value={selectedProduct.price}
+                  onChange={(e) => setSelectedProduct({...selectedProduct, price: Number(e.target.value)})}
+                />
+              </div>
+              <div className="col-span-6">
+                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Tồn kho</label>
+                <input 
+                  type="number"
+                  className="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-lg px-3 py-2 text-sm focus:border-primary-container" 
+                  value={selectedProduct.stock}
+                  onChange={(e) => setSelectedProduct({...selectedProduct, stock: Number(e.target.value)})}
+                />
+              </div>
+              <div className="col-span-6">
+                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Nhà sản xuất</label>
+                <input 
+                  className="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-lg px-3 py-2 text-sm focus:border-primary-container" 
+                  value={selectedProduct.manufacturer || ""}
+                  onChange={(e) => setSelectedProduct({...selectedProduct, manufacturer: e.target.value})}
+                />
+              </div>
+              <div className="col-span-6">
+                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Nước sản xuất</label>
+                <input 
+                  className="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-lg px-3 py-2 text-sm focus:border-primary-container" 
+                  value={selectedProduct.origin || ""}
+                  onChange={(e) => setSelectedProduct({...selectedProduct, origin: e.target.value})}
+                />
+              </div>
+              <div className="col-span-12">
+                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Nhà cung cấp</label>
+                <input 
+                  className="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-lg px-3 py-2 text-sm focus:border-primary-container" 
+                  value={selectedProduct.supplier || ""}
+                  onChange={(e) => setSelectedProduct({...selectedProduct, supplier: e.target.value})}
                 />
               </div>
             </div>

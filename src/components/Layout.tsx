@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 
 export default function Layout() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
   const isPOS = location.pathname === "/pos";
 
@@ -11,18 +12,38 @@ export default function Layout() {
     return <Outlet />;
   }
 
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
   return (
     <div className="min-h-screen bg-surface">
-      <Sidebar />
-      <div className="pl-64">
-        <Header title={getPageTitle(location.pathname)} />
-        <main className="pt-24 px-8 pb-8">
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      
+      <div className={cn(
+        "transition-all duration-300 min-h-screen",
+        "lg:pl-64"
+      )}>
+        <Header 
+          title={getPageTitle(location.pathname)} 
+          onMenuClick={toggleSidebar}
+        />
+        <main className="pt-20 md:pt-24 px-4 md:px-8 pb-8">
           <Outlet />
         </main>
       </div>
+
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
     </div>
   );
 }
+
+// Helper to keep imports clean
+import { cn } from "../lib/utils";
 
 function getPageTitle(pathname: string) {
   switch (pathname) {
