@@ -92,8 +92,8 @@ export default function StaffPage() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-auto lg:h-[calc(100vh-112px)] overflow-hidden">
-      <div className="px-4 md:px-8 py-4 md:py-6 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+    <div className="flex flex-col h-auto lg:h-[calc(100vh-128px)] overflow-hidden bg-surface-container-low/30 rounded-3xl">
+      <div className="py-6 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
           <nav className="flex text-[10px] font-bold tracking-widest text-on-surface-variant uppercase mb-2">
             <span>Hệ thống</span>
@@ -123,7 +123,7 @@ export default function StaffPage() {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col lg:flex-row px-4 md:px-8 pb-8 gap-6 overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row pb-6 gap-6 overflow-hidden">
         <div className="flex-[1.5] flex flex-col bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
           <div className="p-4 bg-surface flex flex-col sm:flex-row justify-between items-center border-b border-outline-variant/10 gap-3">
             <div className="relative w-full sm:max-w-xs">
@@ -397,13 +397,13 @@ export default function StaffPage() {
                   disabled={isSubmitting}
                   className="px-5 py-2 rounded-md font-bold text-sm bg-surface-container-lowest text-on-surface border border-outline-variant/30 hover:bg-surface-container-high transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50"
                 >
-                  <Edit className="w-4 h-4" /> {isSubmitting ? "Đang lưu..." : "Chỉnh"}
+                  <Edit className="w-4 h-4" /> {isSubmitting ? "Đang lưu..." : "Lưu thay đổi"}
                 </button>
                 <button 
                   onClick={startAdding}
                   className="px-5 py-2 rounded-md font-bold text-sm bg-gradient-to-br from-primary to-primary-container text-white shadow-md hover:brightness-110 transition-all active:scale-95 flex items-center gap-2"
                 >
-                  <Plus className="w-4 h-4" /> Thêm
+                  <Plus className="w-4 h-4" /> Thêm mới
                 </button>
               </>
             ) : (
